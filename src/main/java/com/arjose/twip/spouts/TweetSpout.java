@@ -2,6 +2,7 @@ package com.arjose.twip.spouts;
 
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.regex.Pattern;
 
 import twitter4j.FilterQuery;
 import twitter4j.StallWarning;
@@ -24,9 +25,9 @@ public class TweetSpout extends BaseRichSpout {
 
 	static final long DELAY_FOR_TWEET = 10;
 	static final boolean USE_FIRE = false;
-	static final String DELIMITER = "~|";
+	static final String DELIMITER = "~";
 
-	transient private ConfigurationBuilder config = null;
+	private static ConfigurationBuilder config = null;
 	LinkedBlockingQueue<String> queue = null;
 	SpoutOutputCollector spoutOutputCollector;
 	TwitterStream twitterStream;
@@ -35,9 +36,12 @@ public class TweetSpout extends BaseRichSpout {
 	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret,
 			boolean fire) {
 		this.fire = fire;
-		if (customerKey != null && customerSecret != null && accessToken != null && accessSecret != null) {
+		if (!"".equals(customerKey) && !"".equals(customerSecret) && !"".equals(accessToken)
+				&& !"".equals(accessSecret)) {
 			config = new ConfigurationBuilder().setOAuthConsumerKey(customerKey).setOAuthConsumerSecret(customerSecret)
 					.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessSecret);
+		} else {
+			config = new ConfigurationBuilder();
 		}
 	}
 
@@ -47,23 +51,30 @@ public class TweetSpout extends BaseRichSpout {
 
 	@Override
 	public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
+		TwitterStreamFactory fact = null;
 		queue = new LinkedBlockingQueue<String>(1000);
 		this.spoutOutputCollector = collector;
-		
-		TwitterStreamFactory fact = new TwitterStreamFactory(config.build());
-		
+
+		try {
+			fact = new TwitterStreamFactory(config.build());
+		} catch (Exception ex) {
+			System.out.println("twipLog: TwitterStreamFactory config failed.");
+			return;
+		}
+
 		twitterStream = fact.getInstance();
-		
-		if (twitterStream == null){
+
+		if (twitterStream == null) {
 			System.out.println("twipLog: TwitterStreamFactory did not generate an instance for twitterStream");
 			return;
 		}
-			
+
 		FilterQuery tweetFilterQuery = new FilterQuery();
 		tweetFilterQuery.language(new String[] { "en" });
 		twitterStream.addListener(new Tweeter());
 		twitterStream.filter(tweetFilterQuery);
 
+		System.out.println("twipLog: TweetSpout about to" + (fire ? "FIRE" : "Sample") + " Hose ");
 		if (!fire)
 			twitterStream.sample();
 		else
@@ -78,15 +89,16 @@ public class TweetSpout extends BaseRichSpout {
 			Utils.sleep(DELAY_FOR_TWEET);
 			return;
 		}
-		String tweet = next.split(DELIMITER)[0];
-		String isRetweet = next.split(DELIMITER)[1];
-		String favCount = next.split(DELIMITER)[2];
-		String retweetCount =  next.split(DELIMITER)[3];
-		String name = next.split(DELIMITER)[4];
-		String replyTo = next.split(DELIMITER)[5];
-		String place = next.split(DELIMITER)[6];
-		String country = next.split(DELIMITER)[7];
-		
+		String[] tweetBits = next.split(Pattern.quote(DELIMITER), 8);
+		String isRetweet = tweetBits[0];
+		String favCount = tweetBits[1];
+		String retweetCount = tweetBits[2];
+		String name = tweetBits[3];
+		String replyTo = tweetBits[4];
+		String place = tweetBits[5];
+		String country = tweetBits[6];
+		String tweet = tweetBits[7];
+
 		Values values = new Values(tweet, isRetweet, favCount, retweetCount, name, replyTo, place, country);
 		spoutOutputCollector.emit(values);
 
@@ -94,7 +106,8 @@ public class TweetSpout extends BaseRichSpout {
 
 	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("tweet", "isRetweet", "favCount", "retweetCount", "name", "replyTo", "place", "country"));
+		declarer.declare(
+				new Fields("tweet", "isRetweet", "favCount", "retweetCount", "name", "replyTo", "place", "country"));
 	}
 
 	public void close() {
@@ -102,9 +115,9 @@ public class TweetSpout extends BaseRichSpout {
 	}
 
 	/*
-	 * Enqueues tweets as string in this format:
-	 * TWEET_TEXT||Boolean_IS_RETWEET||Int_FAV_COUNT||Int_RETWEET_COUNT||
-	 * SCREEN_NAME||IN_REPLY_TO||PLACE||COUNTRY
+	 * Enqueues raw tweets as string in this format:
+	 * Boolean_IS_RETWEET||Int_FAV_COUNT||Int_RETWEET_COUNT||
+	 * SCREEN_NAME||IN_REPLY_TO||PLACE||COUNTRY||TWEET_TEXT
 	 */
 	private class Tweeter implements StatusListener {
 
@@ -112,10 +125,8 @@ public class TweetSpout extends BaseRichSpout {
 		public void onStatus(Status status) {
 			// Add the tweet into the queue buffer
 			// queue.offer(status.getText());
-			StringBuilder sb = new StringBuilder();
-			sb.append(status.getText());
+			StringBuilder sb = new StringBuilder("");
 
-			sb.append(DELIMITER);
 			sb.append(status.isRetweet());
 			sb.append(DELIMITER);
 			sb.append(status.getFavoriteCount());
@@ -137,6 +148,8 @@ public class TweetSpout extends BaseRichSpout {
 			sb.append(DELIMITER);
 			if (status.getPlace() != null)
 				sb.append(status.getPlace().getCountry());
+			sb.append(DELIMITER);
+			sb.append(status.getText());
 
 			queue.offer(sb.toString());
 

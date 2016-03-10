@@ -17,22 +17,25 @@ import backtype.storm.tuple.Values;
 
 @SuppressWarnings("deprecation")
 public class HashBolt extends BaseRichBolt {
-	static final String DELIMITER = "~|";
 	OutputCollector collector;
 	StringBuilder result;
-	String key = "";
+	String key = null;
 	transient RedisConnection<String, String> redis;
 
 	public HashBolt(String key) {
 		this.key = key;
 	}
 
+	public HashBolt() {
+	}
+
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
 		result = new StringBuilder();
-		//RedisClient client = RedisClient.create(new RedisURI("localhost", 6379, 1, TimeUnit.DAYS));
-		//redis = (RedisConnection<String, String>) client.connect();
+		// RedisClient client = RedisClient.create(new RedisURI("localhost",
+		// 6379, 1, TimeUnit.DAYS));
+		// redis = (RedisConnection<String, String>) client.connect();
 	}
 
 	@Override
@@ -46,11 +49,14 @@ public class HashBolt extends BaseRichBolt {
 		String replyTo = tuple.getStringByField("replyTo");
 		String place = tuple.getStringByField("place");
 		String country = tuple.getStringByField("country");
-		if (tweet.toUpperCase().contains(key.toUpperCase())) {
-			System.out.println("twipLog: processing tweet [" + tweet + "] XX " + isRetweet + " XX " + favCount + " XX " + retweetCount
-					+ " XX " + name + " XX " + replyTo + " XX " + place + " XX " + country);
-			
+
+		System.out.println("twipLog: Looking for key " + key + " in tweet [" + tweet + "] |" + isRetweet + "|"
+				+ favCount + "|" + retweetCount + "|" + name + "|" + replyTo + "|" + place + "|" + country);
+
+		if (key != null && !"".equals(key) && tweet.contains(key)) {
+			System.out.println("twipLog: found key [" + key + "] in tweet [" + tweet + "]");
 		}
+
 		Values values = new Values(tweet, isRetweet, favCount, retweetCount, name, replyTo, place, country);
 		collector.emit(values);
 	}
