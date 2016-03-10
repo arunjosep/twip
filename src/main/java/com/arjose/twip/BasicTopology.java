@@ -1,7 +1,7 @@
 package com.arjose.twip;
 
-import com.arjose.twip.bolts.AnchorBolt;
-import com.arjose.twip.spouts.PanchayathSpout;
+import com.arjose.twip.bolts.HashBolt;
+import com.arjose.twip.spouts.TweetSpout;
 import com.esotericsoftware.minlog.Log;
 
 import backtype.storm.Config;
@@ -9,15 +9,27 @@ import backtype.storm.LocalCluster;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
+import backtype.storm.topology.IRichSpout;
 import backtype.storm.topology.TopologyBuilder;
+
 
 public class BasicTopology {
 
 	public static void main(String[] args) {
 		TopologyBuilder builder = new TopologyBuilder();
 
-		builder.setSpout("panchayath", new PanchayathSpout(), 1);
-		builder.setBolt("anchor1", new AnchorBolt(), 2).shuffleGrouping("panchayath");
+		String customerKey, customerSecret, accessToken, accessSecret;
+		
+		/* Add actual keys here*/ 
+		customerKey    = "";
+		customerSecret = "";
+		accessToken    = "";
+		accessSecret   = "";
+		
+		IRichSpout tweetSpout = new TweetSpout(customerKey, customerSecret, accessToken, accessSecret);
+
+		builder.setSpout("tweetdhara", tweetSpout);
+		builder.setBolt("anchor", new HashBolt("#MallyaEscapes"), 3).shuffleGrouping("tweetdhara");
 
 		Config conf = new Config();
 		conf.setDebug(true);
@@ -26,25 +38,35 @@ public class BasicTopology {
 			try {
 				StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
 			} catch (AlreadyAliveException e) {
-				Log.error("Seems to be running already");
+				Log.error("twipLog: Topology seems to be running already");
 				e.printStackTrace();
 			} catch (InvalidTopologyException e) {
-				Log.error("Screwed up topology");
+				Log.error("twipLog: Screwed up topology");
+				e.printStackTrace();
+			} catch (Exception e){
+				Log.error("twipLog: Topology failed");
 				e.printStackTrace();
 			}
 
 		} else {
 			conf.setMaxTaskParallelism(3);
 
-			LocalCluster cluster = new LocalCluster();
-			cluster.submitTopology("default-input", conf, builder.createTopology());
-
+			LocalCluster cluster = new LocalCluster();			
+			
 			try {
-				Thread.sleep(10000);
-			} catch (InterruptedException e) {
-				Log.error("No input passed");
+				cluster.submitTopology("basic-topology", conf, builder.createTopology());
+			} catch (Exception e){
+				Log.error("twipLog: Topology failed");
 				e.printStackTrace();
 			}
+
+			try {
+				Thread.sleep(300000000);
+			} catch (InterruptedException e) {
+				Log.error("twipLog: Topology was killed");
+				e.printStackTrace();
+			}
+			cluster.killTopology("basic-topology");
 			cluster.shutdown();
 		}
 	}
