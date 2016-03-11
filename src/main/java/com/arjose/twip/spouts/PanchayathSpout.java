@@ -15,19 +15,16 @@ public class PanchayathSpout extends BaseRichSpout {
 
 	private static final long serialVersionUID = 1L;
 
-	@Override
 	public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
 		this.collector = collector;
 		num=0;
 	}
 
-	@Override
 	public void nextTuple() {
 	    Utils.sleep(50);
 	    collector.emit(new Values("tuple "+num++));
 	}
 
-	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("tweet"));
 	}

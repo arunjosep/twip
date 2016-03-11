@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry including="**/*.java" kind="src" path="src/main/java"/>
+	<classpathentry kind="src" output="target/classes" path="src/main/java">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="var" path="M2_REPO/javax/servlet/servlet-api/2.5/servlet-api-2.5.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/storm/storm/0.8.2/storm-0.8.2.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/clojure/clojure/1.4.0/clojure-1.4.0.jar"/>
@@ -50,9 +59,16 @@
 	<classpathentry kind="var" path="M2_REPO/storm/tools.cli/0.2.2/tools.cli-0.2.2.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/googlecode/disruptor/disruptor/2.10.1/disruptor-2.10.1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/storm/jgrapht/0.8.3/jgrapht-0.8.3.jar"/>
-	<classpathentry kind="lib" path="/home/arun/Project/bin/lib/lettuce-2.3.3.jar"/>
-	<classpathentry kind="lib" path="/home/arun/Project/bin/lib/lettuce-4.1.1.Final.jar"/>
-	<classpathentry kind="lib" path="/home/arun/Project/bin/lib/twitter4j-core-4.0.4.jar"/>
-	<classpathentry kind="lib" path="/home/arun/Project/bin/lib/twitter4j-stream-4.0.4.jar"/>
+	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
+		<attributes>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

@@ -1,7 +1,12 @@
 package com.arjose.twip;
 
+import java.util.HashMap;
+
+import com.arjose.twip.bolts.ElectionBolt;
 import com.arjose.twip.bolts.HashBolt;
 import com.arjose.twip.spouts.TweetSpout;
+import com.arjose.twip.util.CommandParser;
+import com.arjose.twip.util.CommandlineArgs;
 import com.esotericsoftware.minlog.Log;
 
 import backtype.storm.Config;
@@ -15,55 +20,95 @@ import backtype.storm.topology.base.BaseRichSpout;
 public class BasicTopology {
 
 	public static void main(String[] args) {
+
 		TopologyBuilder builder = new TopologyBuilder();
+		Config conf = new Config();
 
+		/* *** Parse command line args *** */
+		HashMap argsMap = CommandParser.parseList(args);
+		
+		String key = (String) ((argsMap.get(CommandlineArgs.D_HASH_TAG) != null)
+				? argsMap.get(CommandlineArgs.D_HASH_TAG) : "");
+		Boolean openFire = (Boolean) ((argsMap.get(CommandlineArgs.S_OPEN_FIRE) != null)
+				? argsMap.get(CommandlineArgs.S_OPEN_FIRE) : false);
+		Boolean runProd = (Boolean) ((argsMap.get(CommandlineArgs.S_PROD_CLUSTER) != null)
+				? argsMap.get(CommandlineArgs.S_PROD_CLUSTER) : false);
+		Long ttl= (Long) ((argsMap.get(CommandlineArgs.D_TTL_SEC) != null)
+				? argsMap.get(CommandlineArgs.D_TTL_SEC) : 90);
+
+		
+		
+		// Define authentication params
 		String customerKey, customerSecret, accessToken, accessSecret;
-		String command = (args != null && args.length > 0) ? args[0] : "";
-
 		customerKey = "";
 		customerSecret = "";
 		accessToken = "";
 		accessSecret = "";
 
-		// ------------------------------------------------------------------//
-		// Add actual keys above or place a file twitter4j.properties
-		// in parent folder with properties (no spaces or quotes):
-		// oauth.consumerKey=*************
-		// oauth.consumerSecret=**********
-		// oauth.accessToken=*************
-		// oauth.accessTokenSecret=*******
-		// ------------------------------------------------------------------//
+		/*
+		 * Add actual keys in strings above. Or place a file
+		 * twitter4j.properties in parent folder with the required properties
+		 * (with no spaces or quotes): oauth.consumerKey=*************
+		 * oauth.consumerSecret=********** oauth.accessToken=*************
+		 * oauth.accessTokenSecret=*******
+		 */
 
-		System.out.println("twipLog: In BasicTopology, about to create TweetSpout" + command);
-		BaseRichSpout tweetSpout = new TweetSpout(customerKey, customerSecret, accessToken, accessSecret);
+		
+		/* *** Define topology *** */
+		System.out.println("twipLog: BasicTopology starting up.");
 
-		builder.setSpout("tweetdhara", tweetSpout);
-		builder.setBolt("anchor", new HashBolt(command), 5).shuffleGrouping("tweetdhara");
+		BaseRichSpout tweetSpout = new TweetSpout(customerKey, customerSecret, accessToken, accessSecret, key,
+				openFire);
 
-		Config conf = new Config();
-		conf.setDebug(true);
+		builder.setSpout("TweetDhaara", tweetSpout);
+		builder.setBolt("SortHashTags", new HashBolt(key), 5).shuffleGrouping("TweetDhaara");
+		builder.setBolt("Election", new ElectionBolt(key), 5).shuffleGrouping("TweetDhaara");
 
-		conf.setMaxTaskParallelism(3);
+		/* *** End of topology *** */
 
-		LocalCluster cluster = new LocalCluster();
+		
+		// Run topology on local or production cluster
 
-		try {
-			System.out.println("twipLog: In BasicTopology else: cluster.submitTopology");
-			cluster.submitTopology("basic-topology", conf, builder.createTopology());
-		} catch (Exception e) {
-			Log.error("twipLog: Topology failed");
-			e.printStackTrace();
+		if (!runProd) {
+			// Run locally
+			// conf.setDebug(true);
+			conf.setMaxTaskParallelism(5);
+			LocalCluster cluster = new LocalCluster();
+			System.out.println("twipLog: Submitting BasicTopology on local cluster");
+			try {
+
+				cluster.submitTopology("basic-topology", conf, builder.createTopology());
+			} catch (Exception e) {
+				System.out.println("twipLog: Topology failed");
+				e.printStackTrace();
+			}
+			try {
+				Thread.sleep(ttl*1000); // ttl is in seconds
+			} catch (InterruptedException e) {
+				System.out.println("twipLog: Topology was killed");
+				e.printStackTrace();
+			}
+			cluster.killTopology("basic-topology");
+			cluster.shutdown();
+
+		} else {
+			// Run on production
+			conf.setNumWorkers(4);
+			conf.setMaxSpoutPending(4000);
+			System.out.println("twipLog: Submitting BasicTopology on production cluster");
+			try {
+				StormSubmitter.submitTopology("basic-topology", conf, builder.createTopology());
+			} catch (AlreadyAliveException e) {
+				System.out.println("twipLog: Topology is already running. Could not submit");
+				e.printStackTrace();
+			} catch (InvalidTopologyException e) {
+				System.out.println("twipLog: Topology is screwed up. Could not submit");
+				e.printStackTrace();
+			} catch (Exception e) {
+				System.out.println("twipLog: Topology is seriously **** ");
+				e.printStackTrace();
+			}
 		}
-
-		try {
-			Thread.sleep(90000);
-		} catch (InterruptedException e) {
-			Log.error("twipLog: Topology was killed");
-			e.printStackTrace();
-		}
-		cluster.killTopology("basic-topology");
-		cluster.shutdown();
-
 	}
 
 }

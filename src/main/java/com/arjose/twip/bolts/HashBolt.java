@@ -2,6 +2,7 @@ package com.arjose.twip.bolts;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import com.lambdaworks.redis.RedisClient;
 import com.lambdaworks.redis.RedisConnection;
@@ -29,7 +30,6 @@ public class HashBolt extends BaseRichBolt {
 	public HashBolt() {
 	}
 
-	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
 		result = new StringBuilder();
@@ -38,7 +38,6 @@ public class HashBolt extends BaseRichBolt {
 		// redis = (RedisConnection<String, String>) client.connect();
 	}
 
-	@Override
 	public void execute(Tuple tuple) {
 
 		String tweet = tuple.getStringByField("tweet");
@@ -50,18 +49,19 @@ public class HashBolt extends BaseRichBolt {
 		String place = tuple.getStringByField("place");
 		String country = tuple.getStringByField("country");
 
-		System.out.println("twipLog: Looking for key " + key + " in tweet [" + tweet + "] |" + isRetweet + "|"
-				+ favCount + "|" + retweetCount + "|" + name + "|" + replyTo + "|" + place + "|" + country);
-
-		if (key != null && !"".equals(key) && tweet.contains(key)) {
-			System.out.println("twipLog: found key [" + key + "] in tweet [" + tweet + "]");
+		// System.out.println("twipLog: Looking for key " + key + " in tweet [" + tweet + "] |" + isRetweet + "|" + favCount + "|" + retweetCount + "|" + name + "|" + replyTo + "|" + place + "|" + country);
+		if (key != null && !"".equals(key)) {
+			for (String word : key.split(Pattern.quote(","))) {
+				if (tweet.contains(word)) {
+					System.out.println("twipLog: found word [" + word + "] in tweet [" + tweet + "]");
+				}
+			}
 		}
 
 		Values values = new Values(tweet, isRetweet, favCount, retweetCount, name, replyTo, place, country);
 		collector.emit(values);
 	}
 
-	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(
 				new Fields("tweet", "isRetweet", "favCount", "retweetCount", "name", "replyTo", "place", "country"));

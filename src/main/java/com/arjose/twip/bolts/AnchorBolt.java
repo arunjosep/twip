@@ -23,7 +23,6 @@ public class AnchorBolt extends BaseBasicBolt {
 		Log.warn(out); 
 	}
 
-	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("tweet"));
 

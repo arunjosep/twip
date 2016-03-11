@@ -24,32 +24,47 @@ import backtype.storm.utils.Utils;
 public class TweetSpout extends BaseRichSpout {
 
 	static final long DELAY_FOR_TWEET = 10;
-	static final boolean USE_FIRE = false;
 	static final String DELIMITER = "~";
 
 	private static ConfigurationBuilder config = null;
 	LinkedBlockingQueue<String> queue = null;
 	SpoutOutputCollector spoutOutputCollector;
 	TwitterStream twitterStream;
-	private boolean fire = USE_FIRE;
+	private boolean fire = false;
+	private String key = "";
 
-	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret,
+	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret, String key,
 			boolean fire) {
 		this.fire = fire;
+		this.key = key;
 		if (!"".equals(customerKey) && !"".equals(customerSecret) && !"".equals(accessToken)
 				&& !"".equals(accessSecret)) {
 			config = new ConfigurationBuilder().setOAuthConsumerKey(customerKey).setOAuthConsumerSecret(customerSecret)
 					.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessSecret);
 		} else {
+			//This works only if the file twitter4j.properties is available with all four tokens.
 			config = new ConfigurationBuilder();
 		}
 	}
 
-	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret) {
-		this(customerKey, customerSecret, accessToken, accessSecret, false);
+	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret, String key) {
+		this(customerKey, customerSecret, accessToken, accessSecret, key, false);
 	}
 
-	@Override
+	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret,
+			boolean fire) {
+		this(customerKey, customerSecret, accessToken, accessSecret, "", fire);
+	}
+
+	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret) {
+		this(customerKey, customerSecret, accessToken, accessSecret, "", false);
+	}
+
+	public TweetSpout(String key, Boolean openFire) {
+		this("", "", "", "", key, false);
+	}
+
+	@SuppressWarnings("rawtypes")
 	public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
 		TwitterStreamFactory fact = null;
 		queue = new LinkedBlockingQueue<String>(1000);
@@ -68,20 +83,23 @@ public class TweetSpout extends BaseRichSpout {
 			System.out.println("twipLog: TwitterStreamFactory did not generate an instance for twitterStream");
 			return;
 		}
+		
+		twitterStream.addListener(new Tweeter());
 
 		FilterQuery tweetFilterQuery = new FilterQuery();
-		tweetFilterQuery.language(new String[] { "en" });
-		twitterStream.addListener(new Tweeter());
+		tweetFilterQuery.language(new String[] {"en"});
+		if ("".equals(key))
+			tweetFilterQuery.track(key.split(Pattern.quote(",")));				
 		twitterStream.filter(tweetFilterQuery);
+		
 
-		System.out.println("twipLog: TweetSpout about to" + (fire ? "FIRE" : "Sample") + " Hose ");
+		System.out.println("twipLog: TweetSpout about to open " + (fire ? "FIRE" : "Sample") + " Hose ");
 		if (!fire)
 			twitterStream.sample();
 		else
 			twitterStream.firehose(1);
 	}
 
-	@Override
 	public void nextTuple() {
 		String next = queue.poll();
 
@@ -104,7 +122,6 @@ public class TweetSpout extends BaseRichSpout {
 
 	}
 
-	@Override
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(
 				new Fields("tweet", "isRetweet", "favCount", "retweetCount", "name", "replyTo", "place", "country"));
@@ -121,7 +138,6 @@ public class TweetSpout extends BaseRichSpout {
 	 */
 	private class Tweeter implements StatusListener {
 
-		@Override
 		public void onStatus(Status status) {
 			// Add the tweet into the queue buffer
 			// queue.offer(status.getText());
@@ -155,27 +171,22 @@ public class TweetSpout extends BaseRichSpout {
 
 		}
 
-		@Override
 		public void onException(Exception arg0) {
 
 		}
 
-		@Override
 		public void onDeletionNotice(StatusDeletionNotice arg0) {
 
 		}
 
-		@Override
 		public void onScrubGeo(long arg0, long arg1) {
 
 		}
 
-		@Override
 		public void onStallWarning(StallWarning arg0) {
 
 		}
 
-		@Override
 		public void onTrackLimitationNotice(int arg0) {
 
 		}
