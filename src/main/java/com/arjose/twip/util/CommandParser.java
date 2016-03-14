@@ -25,7 +25,6 @@ public class CommandParser implements CommandlineArgs {
 			return argsMap;
 
 		for (int i = 0; i < args.length; i++) {
-			log("Checking arg : "+ args[i]);
 
 			if (D_HASH_TAG.equals(args[i])) {
 				if (i + 1 < args.length) {

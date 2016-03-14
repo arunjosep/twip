@@ -7,6 +7,7 @@ import com.arjose.twip.bolts.HashBolt;
 import com.arjose.twip.spouts.TweetSpout;
 import com.arjose.twip.util.CommandParser;
 import com.arjose.twip.util.CommandlineArgs;
+import com.arjose.twip.util.RedisUtils;
 import com.esotericsoftware.minlog.Log;
 
 import backtype.storm.Config;
@@ -53,6 +54,9 @@ public class BasicTopology {
 		 * oauth.consumerSecret=********** oauth.accessToken=*************
 		 * oauth.accessTokenSecret=*******
 		 */
+
+		// Open redis connection
+		RedisUtils.openRedis();
 
 		/* *** Define topology *** */
 		System.out.println("twipLog: BasicTopology starting up.");

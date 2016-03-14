@@ -12,6 +12,15 @@ import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.tuple.Tuple;
 
+/**
+ * Compares count of words in given input along with the source key that found
+ * the tweet. Example: If a tweet was found by the key word "election" and the
+ * candidates are "win,lose" counts are saved in redis with keys
+ * "compare:election:win" and "compare:election:lose"
+ * 
+ * @author arun
+ *
+ */
 public class CompareBolt implements IRichBolt {
 
 	OutputCollector collector;
@@ -40,13 +49,15 @@ public class CompareBolt implements IRichBolt {
 	public void execute(Tuple tuple) {
 
 		String tweet = tuple.getStringByField("tweet");
+		String sourceKey = tuple.getStringByField("foundKey");
 
 		if (candidates != null && !candidates.isEmpty()) {
 			for (String word : candidates.split(Pattern.quote(","))) {
-				System.out.println("twipLog: Looking for word:" + word);
 				if (tweet.toUpperCase().contains(word.toUpperCase())) {
-					if (connected)
-						redis.incr("compare:" + word.toLowerCase());
+					if (connected) {
+						redis.incr("compare:" + sourceKey.toLowerCase() + ":" + word.toLowerCase());
+						redis.incr("compare:total_count");
+					}
 				}
 			}
 		}

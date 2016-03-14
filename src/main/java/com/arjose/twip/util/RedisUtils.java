@@ -26,19 +26,21 @@ public class RedisUtils {
 	 * @return RedisCommands
 	 */
 	public static RedisCommands<String, String> getRedis() {
-		if (redis == null) {
-			try {
-				RedisClient client = RedisClient.create(RedisURI.Builder.redis(host, port).build());
-				StatefulRedisConnection<String, String> redisConn = client.connect();
-				redis = redisConn.sync();
-			} catch (IllegalArgumentException ex) {
-				redis = null;
-				System.out.println("twipLog: Couldn't open connection");
-			}
-		}
 		return redis;
 	}
 
+	public static void openRedis() {
+		try {
+			System.out.println("twipLog: Creating connection to " + host + ":" + port);
+			RedisClient client = RedisClient.create(RedisURI.Builder.redis(host, port).build());
+			StatefulRedisConnection<String, String> redisConn = client.connect();
+			redis = redisConn.sync();
+		} catch (IllegalArgumentException ex) {
+			redis = null;
+			System.out.println("twipLog: Couldn't open connection");
+		}
+	}
+	
 	/**
 	 * Sets connection properties for Redis connection. Need to be called only
 	 * once.

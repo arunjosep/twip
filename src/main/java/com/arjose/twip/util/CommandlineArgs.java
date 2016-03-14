@@ -14,28 +14,28 @@ public interface CommandlineArgs {
 	/**
 	 * Used for passing hash-tag or search key.
 	 */
-	public static final String D_HASH_TAG = "-h";
+	public static final String D_HASH_TAG = "-keys";
 
 	/**
 	 * Used for passing words to compare in tweets containing search key. If
 	 * search key is not passed, will search in all incoming tweets.
 	 */
-	public static final String D_COMPARE_TAGS = "-c";
+	public static final String D_COMPARE_TAGS = "-compare";
 
 	/**
 	 * Time to run in local cluster.
 	 */
-	public static final String D_TTL_SEC = "-t";
+	public static final String D_TTL_SEC = "-ttl";
 
 	/**
 	 * Used to open firehose instead of a filtered hose. If not passed, uses
 	 * twitter hose with language filter for "en" applied.
 	 */
-	public static final String S_OPEN_FIRE = "-f";
+	public static final String S_OPEN_FIRE = "-fire";
 
 	/**
 	 * Run on Production cluster. If not passed runs on local cluster.
 	 */
-	public static final String S_PROD_CLUSTER = "-p";
+	public static final String S_PROD_CLUSTER = "-prod";
 
 }

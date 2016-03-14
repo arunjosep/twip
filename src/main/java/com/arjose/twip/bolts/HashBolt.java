@@ -14,10 +14,16 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
+/**
+ * Counts number of tweets that contain given keys. Stores result in redis as
+ * "hash:key" where "key" is the word that was searched for.
+ * 
+ * @author arun
+ *
+ */
 @SuppressWarnings("deprecation")
 public class HashBolt extends BaseRichBolt {
 	OutputCollector collector;
-	StringBuilder result;
 	String searchKeys = "";
 	RedisCommands redis;
 	Boolean connected = false;
@@ -32,7 +38,6 @@ public class HashBolt extends BaseRichBolt {
 
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
-		result = new StringBuilder();
 		redis = RedisUtils.getRedis();
 		if (redis != null) {
 			connected = true;
@@ -57,11 +62,13 @@ public class HashBolt extends BaseRichBolt {
 		// place + "|" + country);
 
 		if (searchKeys != null && !searchKeys.isEmpty()) {
-			for (String word : searchKeys.split(Pattern.quote(","))) {
-				if (tweet.toUpperCase().contains(word.toUpperCase())) {
-					if (connected)
-						redis.incr("hash:" + word.toLowerCase());
-					values = new Values(tweet, isRetweet, favCount, retweetCount, name, replyTo, place, country, word);
+			for (String key : searchKeys.split(Pattern.quote(","))) {
+				if (tweet.toUpperCase().contains(key.toUpperCase())) {
+					if (connected){
+						redis.incr("hash:" + key.toLowerCase());
+						redis.incr("hash:total_count");
+						}
+					values = new Values(tweet, isRetweet, favCount, retweetCount, name, replyTo, place, country, key);
 					collector.emit(values);
 				}
 			}
