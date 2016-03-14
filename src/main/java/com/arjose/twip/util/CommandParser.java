@@ -34,6 +34,14 @@ public class CommandParser implements CommandlineArgs {
 					warn(D_HASH_TAG, "hash tag or key to search for");
 				}
 
+			} else if (D_COMPARE_TAGS.equals(args[i])) {
+				if (i + 1 < args.length) {
+					argsMap.put(D_HASH_TAG, args[i + 1]);
+					info(D_COMPARE_TAGS, args[++i]);
+				} else {
+					warn(D_COMPARE_TAGS, "words to compare");
+				}
+
 			} else if (D_TTL_SEC.equals(args[i])) {
 				if (i + 1 == args.length) {
 					warn(D_TTL_SEC, "time to run in local cluster in seconds");

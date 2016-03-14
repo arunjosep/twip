@@ -17,13 +17,19 @@ public interface CommandlineArgs {
 	public static final String D_HASH_TAG = "-h";
 
 	/**
+	 * Used for passing words to compare in tweets containing search key. If
+	 * search key is not passed, will search in all incoming tweets.
+	 */
+	public static final String D_COMPARE_TAGS = "-c";
+
+	/**
 	 * Time to run in local cluster.
 	 */
 	public static final String D_TTL_SEC = "-t";
 
 	/**
-	 * Used to open firehose instead of samplehose. If not passed, uses twitter
-	 * sample hose.
+	 * Used to open firehose instead of a filtered hose. If not passed, uses
+	 * twitter hose with language filter for "en" applied.
 	 */
 	public static final String S_OPEN_FIRE = "-f";
 

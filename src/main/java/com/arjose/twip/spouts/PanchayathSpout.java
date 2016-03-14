@@ -21,7 +21,7 @@ public class PanchayathSpout extends BaseRichSpout {
 	}
 
 	public void nextTuple() {
-	    Utils.sleep(50);
+	    Utils.sleep(100);
 	    collector.emit(new Values("tuple "+num++));
 	}
 

@@ -2,7 +2,7 @@ package com.arjose.twip;
 
 import java.util.HashMap;
 
-import com.arjose.twip.bolts.ElectionBolt;
+import com.arjose.twip.bolts.CompareBolt;
 import com.arjose.twip.bolts.HashBolt;
 import com.arjose.twip.spouts.TweetSpout;
 import com.arjose.twip.util.CommandParser;
@@ -16,6 +16,7 @@ import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.topology.base.BaseRichSpout;
+import backtype.storm.tuple.Fields;
 
 public class BasicTopology {
 
@@ -26,18 +27,18 @@ public class BasicTopology {
 
 		/* *** Parse command line args *** */
 		HashMap argsMap = CommandParser.parseList(args);
-		
-		String key = (String) ((argsMap.get(CommandlineArgs.D_HASH_TAG) != null)
+
+		String searchKeys = (String) ((argsMap.get(CommandlineArgs.D_HASH_TAG) != null)
 				? argsMap.get(CommandlineArgs.D_HASH_TAG) : "");
+		String candidates = (String) ((argsMap.get(CommandlineArgs.D_COMPARE_TAGS) != null)
+				? argsMap.get(CommandlineArgs.D_COMPARE_TAGS) : "");
 		Boolean openFire = (Boolean) ((argsMap.get(CommandlineArgs.S_OPEN_FIRE) != null)
 				? argsMap.get(CommandlineArgs.S_OPEN_FIRE) : false);
 		Boolean runProd = (Boolean) ((argsMap.get(CommandlineArgs.S_PROD_CLUSTER) != null)
 				? argsMap.get(CommandlineArgs.S_PROD_CLUSTER) : false);
-		Long ttl= (Long) ((argsMap.get(CommandlineArgs.D_TTL_SEC) != null)
-				? argsMap.get(CommandlineArgs.D_TTL_SEC) : 90);
+		Long ttl = (Long) ((argsMap.get(CommandlineArgs.D_TTL_SEC) != null) ? argsMap.get(CommandlineArgs.D_TTL_SEC)
+				: 90);
 
-		
-		
 		// Define authentication params
 		String customerKey, customerSecret, accessToken, accessSecret;
 		customerKey = "";
@@ -53,20 +54,18 @@ public class BasicTopology {
 		 * oauth.accessTokenSecret=*******
 		 */
 
-		
 		/* *** Define topology *** */
 		System.out.println("twipLog: BasicTopology starting up.");
 
-		BaseRichSpout tweetSpout = new TweetSpout(customerKey, customerSecret, accessToken, accessSecret, key,
+		BaseRichSpout tweetSpout = new TweetSpout(customerKey, customerSecret, accessToken, accessSecret, searchKeys,
 				openFire);
 
 		builder.setSpout("TweetDhaara", tweetSpout);
-		builder.setBolt("SortHashTags", new HashBolt(key), 5).shuffleGrouping("TweetDhaara");
-		builder.setBolt("Election", new ElectionBolt(key), 5).shuffleGrouping("TweetDhaara");
+		builder.setBolt("SortHashTags", new HashBolt(searchKeys), 5).shuffleGrouping("TweetDhaara");
+		builder.setBolt("CompareWords", new CompareBolt(candidates), 5).shuffleGrouping("SortHashTags");
 
 		/* *** End of topology *** */
 
-		
 		// Run topology on local or production cluster
 
 		if (!runProd) {
@@ -83,11 +82,13 @@ public class BasicTopology {
 				e.printStackTrace();
 			}
 			try {
-				Thread.sleep(ttl*1000); // ttl is in seconds
+				Thread.sleep(ttl * 1000); // ttl is in seconds
 			} catch (InterruptedException e) {
 				System.out.println("twipLog: Topology was killed");
 				e.printStackTrace();
 			}
+			System.out.println("twipLog: Topology shutting down. It's been a great run folks.");
+
 			cluster.killTopology("basic-topology");
 			cluster.shutdown();
 

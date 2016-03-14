@@ -31,18 +31,19 @@ public class TweetSpout extends BaseRichSpout {
 	SpoutOutputCollector spoutOutputCollector;
 	TwitterStream twitterStream;
 	private boolean fire = false;
-	private String key = "";
+	private String keyString = "";
 
-	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret, String key,
-			boolean fire) {
+	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret,
+			String keyString, boolean fire) {
 		this.fire = fire;
-		this.key = key;
+		this.keyString = keyString;
 		if (!"".equals(customerKey) && !"".equals(customerSecret) && !"".equals(accessToken)
 				&& !"".equals(accessSecret)) {
 			config = new ConfigurationBuilder().setOAuthConsumerKey(customerKey).setOAuthConsumerSecret(customerSecret)
 					.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessSecret);
 		} else {
-			//This works only if the file twitter4j.properties is available with all four tokens.
+			// This works only if the file twitter4j.properties is available
+			// with all four tokens.
 			config = new ConfigurationBuilder();
 		}
 	}
@@ -70,6 +71,8 @@ public class TweetSpout extends BaseRichSpout {
 		queue = new LinkedBlockingQueue<String>(1000);
 		this.spoutOutputCollector = collector;
 
+		String[] keys = keyString.split(Pattern.quote(","));
+
 		try {
 			fact = new TwitterStreamFactory(config.build());
 		} catch (Exception ex) {
@@ -83,21 +86,26 @@ public class TweetSpout extends BaseRichSpout {
 			System.out.println("twipLog: TwitterStreamFactory did not generate an instance for twitterStream");
 			return;
 		}
-		
+
 		twitterStream.addListener(new Tweeter());
 
 		FilterQuery tweetFilterQuery = new FilterQuery();
-		tweetFilterQuery.language(new String[] {"en"});
-		if ("".equals(key))
-			tweetFilterQuery.track(key.split(Pattern.quote(",")));				
-		twitterStream.filter(tweetFilterQuery);
-		
+		tweetFilterQuery.language(new String[] { "en" });
+		if (keys.length != 0) {
+			// System.out.println("twipLog: Tracking: " + keyString);
+			tweetFilterQuery.track(keys);
 
-		System.out.println("twipLog: TweetSpout about to open " + (fire ? "FIRE" : "Sample") + " Hose ");
-		if (!fire)
-			twitterStream.sample();
-		else
+		}
+
+		System.out.println("twipLog: TweetSpout about to open " + (fire ? "FIRE" : "Filtered") + " Hose ");
+		if (!fire) {
+			twitterStream.filter(tweetFilterQuery);
+			// Using sample() clears the filters and opens twitter's sample
+			// stream.
+			// twitterStream.sample();
+		} else {
 			twitterStream.firehose(1);
+		}
 	}
 
 	public void nextTuple() {
