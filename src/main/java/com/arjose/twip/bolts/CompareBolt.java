@@ -43,6 +43,7 @@ public class CompareBolt implements IRichBolt {
 
 		if (candidates != null && !candidates.isEmpty()) {
 			for (String word : candidates.split(Pattern.quote(","))) {
+				System.out.println("twipLog: Looking for word:" + word);
 				if (tweet.toUpperCase().contains(word.toUpperCase())) {
 					if (connected)
 						redis.incr("compare:" + word.toLowerCase());

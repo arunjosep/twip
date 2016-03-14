@@ -25,6 +25,7 @@ public class CommandParser implements CommandlineArgs {
 			return argsMap;
 
 		for (int i = 0; i < args.length; i++) {
+			log("Checking arg : "+ args[i]);
 
 			if (D_HASH_TAG.equals(args[i])) {
 				if (i + 1 < args.length) {
@@ -36,7 +37,7 @@ public class CommandParser implements CommandlineArgs {
 
 			} else if (D_COMPARE_TAGS.equals(args[i])) {
 				if (i + 1 < args.length) {
-					argsMap.put(D_HASH_TAG, args[i + 1]);
+					argsMap.put(D_COMPARE_TAGS, args[i + 1]);
 					info(D_COMPARE_TAGS, args[++i]);
 				} else {
 					warn(D_COMPARE_TAGS, "words to compare");
