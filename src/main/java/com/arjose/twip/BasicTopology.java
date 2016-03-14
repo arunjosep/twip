@@ -55,7 +55,7 @@ public class BasicTopology {
 		 * oauth.accessTokenSecret=*******
 		 */
 
-		// Open redis connection
+		// Open redis connection, so that all bolts can can reuse it.
 		RedisUtils.openRedis();
 
 		/* *** Define topology *** */
