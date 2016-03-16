@@ -21,7 +21,6 @@ import backtype.storm.tuple.Values;
  * @author arun
  *
  */
-@SuppressWarnings("deprecation")
 public class HashBolt extends BaseRichBolt {
 	OutputCollector collector;
 	String searchKeys = "";
@@ -41,6 +40,7 @@ public class HashBolt extends BaseRichBolt {
 		redis = RedisUtils.getRedis();
 		if (redis != null) {
 			connected = true;
+			redis.incr("conn:HashBolt");
 		}
 	}
 
@@ -56,18 +56,13 @@ public class HashBolt extends BaseRichBolt {
 		String country = tuple.getStringByField("country");
 		Values values = null;
 
-		// System.out.println("twipLog: Looking for keys : " + searchKeys + " in
-		// tweet [" + tweet + "] |" + isRetweet + "|"
-		// + favCount + "|" + retweetCount + "|" + name + "|" + replyTo + "|" +
-		// place + "|" + country);
-
 		if (searchKeys != null && !searchKeys.isEmpty()) {
 			for (String key : searchKeys.split(Pattern.quote(","))) {
 				if (tweet.toUpperCase().contains(key.toUpperCase())) {
-					if (connected){
+					if (connected) {
 						redis.incr("hash:" + key.toLowerCase());
 						redis.incr("hash:total_count");
-						}
+					}
 					values = new Values(tweet, isRetweet, favCount, retweetCount, name, replyTo, place, country, key);
 					collector.emit(values);
 				}

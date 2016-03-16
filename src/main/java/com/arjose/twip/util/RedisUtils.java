@@ -25,11 +25,15 @@ public class RedisUtils {
 	 * 
 	 * @return RedisCommands
 	 */
-	public static RedisCommands<String, String> getRedis() {
+	public static synchronized RedisCommands<String, String> getRedis() {
+		System.out.println("twipLog: getRedis()");
+		if(redis==null){
+			openRedis();
+		}		
 		return redis;
 	}
 
-	public static void openRedis() {
+	private static void openRedis() {
 		try {
 			System.out.println("twipLog: Creating connection to " + host + ":" + port);
 			RedisClient client = RedisClient.create(RedisURI.Builder.redis(host, port).build());

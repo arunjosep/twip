@@ -40,23 +40,48 @@ public class CompareBolt implements IRichBolt {
 
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		this.collector = collector;
+
 		redis = RedisUtils.getRedis();
 		if (redis != null) {
 			connected = true;
+			redis.incr("conn:CompareBolt");
 		}
 	}
 
 	public void execute(Tuple tuple) {
 
 		String tweet = tuple.getStringByField("tweet");
-		String sourceKey = tuple.getStringByField("foundKey");
+		String sourceKey;
+
+		try {
+			sourceKey = tuple.getStringByField("foundKey");
+		} catch (IllegalArgumentException ex) {
+			sourceKey = null;
+		}
 
 		if (candidates != null && !candidates.isEmpty()) {
-			for (String word : candidates.split(Pattern.quote(","))) {
-				if (tweet.toUpperCase().contains(word.toUpperCase())) {
-					if (connected) {
-						redis.incr("compare:" + sourceKey.toLowerCase() + ":" + word.toLowerCase());
-						redis.incr("compare:total_count");
+			if (sourceKey != null) {
+				// sourceKey is available only if a HashBolt sorted the tweets
+				// based on how it found the tweet
+				for (String word : candidates.split(Pattern.quote(","))) {
+					if (tweet.toUpperCase().contains(word.toUpperCase())) {
+						if (connected) {
+							redis.incr("compare:" + sourceKey.toLowerCase() + ":" + word.toLowerCase());
+							redis.incr("compare:total_count");
+						}
+					}
+				}
+			} else {
+				// If sourceKey is null, input is coming directly from source.
+				// So count based on candidates only.
+				for (String word : candidates.split(Pattern.quote(","))) {
+					if (tweet.toUpperCase().contains(word.toUpperCase())) {
+						if (connected) {
+							Long vote = redis.incr("voteCount:" + word.toLowerCase());
+							Long total = redis.incr("vote:total_count");
+							double perc = (vote * 100.0) / total;
+							redis.set("votePercent:" + word.toLowerCase(), String.format("%.2f", perc));
+						}
 					}
 				}
 			}

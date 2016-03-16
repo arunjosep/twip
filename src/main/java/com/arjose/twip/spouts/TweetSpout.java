@@ -4,14 +4,8 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
-import twitter4j.FilterQuery;
-import twitter4j.StallWarning;
-import twitter4j.Status;
-import twitter4j.StatusDeletionNotice;
-import twitter4j.StatusListener;
-import twitter4j.TwitterStream;
-import twitter4j.TwitterStreamFactory;
-import twitter4j.conf.ConfigurationBuilder;
+import com.arjose.twip.util.RedisUtils;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -20,6 +14,14 @@ import backtype.storm.topology.base.BaseRichSpout;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
+import twitter4j.FilterQuery;
+import twitter4j.StallWarning;
+import twitter4j.Status;
+import twitter4j.StatusDeletionNotice;
+import twitter4j.StatusListener;
+import twitter4j.TwitterStream;
+import twitter4j.TwitterStreamFactory;
+import twitter4j.conf.ConfigurationBuilder;
 
 public class TweetSpout extends BaseRichSpout {
 
@@ -32,37 +34,28 @@ public class TweetSpout extends BaseRichSpout {
 	TwitterStream twitterStream;
 	private boolean fire = false;
 	private String keyString = "";
+	RedisCommands redis;
+	Boolean connected = false;
+	String customerKey, customerSecret, accessToken, accessSecret;
 
 	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret,
 			String keyString, boolean fire) {
+		this.customerKey = customerKey;
+		this.customerSecret = customerSecret;
+		this.accessToken = accessToken;
+		this.accessSecret = accessSecret;
 		this.fire = fire;
 		this.keyString = keyString;
-		if (!"".equals(customerKey) && !"".equals(customerSecret) && !"".equals(accessToken)
-				&& !"".equals(accessSecret)) {
-			config = new ConfigurationBuilder().setOAuthConsumerKey(customerKey).setOAuthConsumerSecret(customerSecret)
-					.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessSecret);
-		} else {
-			// This works only if the file twitter4j.properties is available
-			// with all four tokens.
-			config = new ConfigurationBuilder();
-		}
 	}
 
-	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret, String key) {
-		this(customerKey, customerSecret, accessToken, accessSecret, key, false);
-	}
+	public TweetSpout(String searchKeys, Boolean openFire) {
+		this.fire = openFire;
+		this.keyString = searchKeys;
 
-	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret,
-			boolean fire) {
-		this(customerKey, customerSecret, accessToken, accessSecret, "", fire);
-	}
-
-	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret) {
-		this(customerKey, customerSecret, accessToken, accessSecret, "", false);
-	}
-
-	public TweetSpout(String key, Boolean openFire) {
-		this("", "", "", "", key, false);
+		this.customerKey = "";
+		this.customerSecret = "";
+		this.accessToken = "";
+		this.accessSecret = "";
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -71,12 +64,32 @@ public class TweetSpout extends BaseRichSpout {
 		queue = new LinkedBlockingQueue<String>(1000);
 		this.spoutOutputCollector = collector;
 
+		System.out.println("twipLog: TweetSpout using keyString : " + keyString);
+
+		//----------------Add keys and secrets here------------------------//
+		customerKey = "";
+		customerSecret = "";
+		accessToken = "";
+		accessSecret = "";
+
+		config = new ConfigurationBuilder().setOAuthConsumerKey(customerKey).setOAuthConsumerSecret(customerSecret)
+				.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessSecret);
+		config.setHttpProxyHost("www-proxy.idc.oracle.com");
+		config.setHttpProxyPort(80);
+
+		redis = RedisUtils.getRedis();
+		if (redis != null) {
+			connected = true;
+			redis.incr("conn:TweetSpout");
+		}
+
 		String[] keys = keyString.split(Pattern.quote(","));
 
 		try {
 			fact = new TwitterStreamFactory(config.build());
 		} catch (Exception ex) {
 			System.out.println("twipLog: TwitterStreamFactory config failed.");
+			ex.printStackTrace();
 			return;
 		}
 
@@ -100,8 +113,8 @@ public class TweetSpout extends BaseRichSpout {
 		System.out.println("twipLog: TweetSpout about to open " + (fire ? "FIRE" : "Filtered") + " Hose ");
 		if (!fire) {
 			twitterStream.filter(tweetFilterQuery);
-			// Using sample() clears the filters and opens twitter's sample
-			// stream.
+			// Using sample() clears the filters and opens twitter's
+			// SampleStream.
 			// twitterStream.sample();
 		} else {
 			twitterStream.firehose(1);
@@ -126,6 +139,8 @@ public class TweetSpout extends BaseRichSpout {
 		String tweet = tweetBits[7];
 
 		Values values = new Values(tweet, isRetweet, favCount, retweetCount, name, replyTo, place, country);
+		if (connected)
+			redis.incr("dhaara:total_count");
 		spoutOutputCollector.emit(values);
 
 	}
@@ -137,6 +152,7 @@ public class TweetSpout extends BaseRichSpout {
 
 	public void close() {
 		twitterStream.shutdown();
+		System.out.println("twipLog: twitterStream closed.");
 	}
 
 	/*

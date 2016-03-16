@@ -7,8 +7,6 @@ import com.arjose.twip.bolts.HashBolt;
 import com.arjose.twip.spouts.TweetSpout;
 import com.arjose.twip.util.CommandParser;
 import com.arjose.twip.util.CommandlineArgs;
-import com.arjose.twip.util.RedisUtils;
-import com.esotericsoftware.minlog.Log;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
@@ -16,8 +14,6 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.topology.TopologyBuilder;
-import backtype.storm.topology.base.BaseRichSpout;
-import backtype.storm.tuple.Fields;
 
 public class BasicTopology {
 
@@ -38,35 +34,15 @@ public class BasicTopology {
 		Boolean runProd = (Boolean) ((argsMap.get(CommandlineArgs.S_PROD_CLUSTER) != null)
 				? argsMap.get(CommandlineArgs.S_PROD_CLUSTER) : false);
 		Long ttl = (Long) ((argsMap.get(CommandlineArgs.D_TTL_SEC) != null) ? argsMap.get(CommandlineArgs.D_TTL_SEC)
-				: 90);
-
-		// Define authentication params
-		String customerKey, customerSecret, accessToken, accessSecret;
-		customerKey = "";
-		customerSecret = "";
-		accessToken = "";
-		accessSecret = "";
-
-		/*
-		 * Add actual keys in strings above. Or place a file
-		 * twitter4j.properties in parent folder with the required properties
-		 * (with no spaces or quotes): oauth.consumerKey=*************
-		 * oauth.consumerSecret=********** oauth.accessToken=*************
-		 * oauth.accessTokenSecret=*******
-		 */
-
-		// Open redis connection, so that all bolts can can reuse it.
-		RedisUtils.openRedis();
+				: 90L);
 
 		/* *** Define topology *** */
 		System.out.println("twipLog: BasicTopology starting up.");
 
-		BaseRichSpout tweetSpout = new TweetSpout(customerKey, customerSecret, accessToken, accessSecret, searchKeys,
-				openFire);
-
-		builder.setSpout("TweetDhaara", tweetSpout);
-		builder.setBolt("SortHashTags", new HashBolt(searchKeys), 5).shuffleGrouping("TweetDhaara");
-		builder.setBolt("CompareWords", new CompareBolt(candidates), 5).shuffleGrouping("SortHashTags");
+		builder.setSpout("TweetDhaara", new TweetSpout(searchKeys, openFire));
+		builder.setBolt("SortHashTags", new HashBolt(searchKeys), 3).shuffleGrouping("TweetDhaara");
+		builder.setBolt("CountThroughKey", new CompareBolt(candidates), 4).shuffleGrouping("SortHashTags");
+		builder.setBolt("Election", new CompareBolt(candidates), 6).shuffleGrouping("TweetDhaara");
 
 		/* *** End of topology *** */
 
@@ -75,7 +51,10 @@ public class BasicTopology {
 		if (!runProd) {
 			// Run locally
 			// conf.setDebug(true);
-			conf.setMaxTaskParallelism(5);
+			conf.put(CommandlineArgs.D_HASH_TAG, searchKeys);
+			conf.put(CommandlineArgs.D_COMPARE_TAGS, candidates);
+
+			conf.setMaxTaskParallelism(50);
 			LocalCluster cluster = new LocalCluster();
 			System.out.println("twipLog: Submitting BasicTopology on local cluster");
 			try {
@@ -98,7 +77,7 @@ public class BasicTopology {
 
 		} else {
 			// Run on production
-			conf.setNumWorkers(4);
+			conf.setNumWorkers(3);
 			conf.setMaxSpoutPending(4000);
 			System.out.println("twipLog: Submitting BasicTopology on production cluster");
 			try {
