@@ -10,7 +10,9 @@ import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.IRichBolt;
 import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 
 /**
  * Compares count of words in given input along with the source key that found
@@ -52,6 +54,7 @@ public class CompareBolt implements IRichBolt {
 
 		String tweet = tuple.getStringByField("tweet");
 		String sourceKey;
+		Values values = null;
 
 		try {
 			sourceKey = tuple.getStringByField("foundKey");
@@ -69,6 +72,8 @@ public class CompareBolt implements IRichBolt {
 							redis.incr("compare:" + sourceKey.toLowerCase() + ":" + word.toLowerCase());
 							redis.incr("compare:total_count");
 						}
+						values = new Values(tweet, word);
+						collector.emit(values);
 					}
 				}
 			} else {
@@ -82,6 +87,8 @@ public class CompareBolt implements IRichBolt {
 							double perc = (vote * 100.0) / total;
 							redis.set("votePercent:" + word.toLowerCase(), String.format("%.2f", perc));
 						}
+						values = new Values(tweet, word);
+						collector.emit(values);
 					}
 				}
 			}
@@ -91,6 +98,7 @@ public class CompareBolt implements IRichBolt {
 	}
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+		declarer.declare(new Fields("tweet", "foundKey"));
 
 	}
 

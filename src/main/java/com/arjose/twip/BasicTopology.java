@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import com.arjose.twip.bolts.CompareBolt;
 import com.arjose.twip.bolts.HashBolt;
+import com.arjose.twip.bolts.SentimentBolt;
 import com.arjose.twip.spouts.TweetSpout;
 import com.arjose.twip.util.CommandParser;
 import com.arjose.twip.util.CommandlineArgs;
@@ -40,9 +41,11 @@ public class BasicTopology {
 		System.out.println("twipLog: BasicTopology starting up.");
 
 		builder.setSpout("TweetDhaara", new TweetSpout(searchKeys, openFire));
+		builder.setBolt("SentimentsWhole", new SentimentBolt(), 10).shuffleGrouping("TweetDhaara");
 		builder.setBolt("SortHashTags", new HashBolt(searchKeys), 3).shuffleGrouping("TweetDhaara");
-		builder.setBolt("CountThroughKey", new CompareBolt(candidates), 4).shuffleGrouping("SortHashTags");
-		builder.setBolt("Election", new CompareBolt(candidates), 6).shuffleGrouping("TweetDhaara");
+		builder.setBolt("CountThroughKey", new CompareBolt(candidates), 3).shuffleGrouping("SortHashTags");
+		builder.setBolt("Election", new CompareBolt(candidates), 3).shuffleGrouping("TweetDhaara");
+		builder.setBolt("SentimentsThroughKeys", new SentimentBolt(), 10).shuffleGrouping("Election");
 
 		/* *** End of topology *** */
 
@@ -77,7 +80,7 @@ public class BasicTopology {
 
 		} else {
 			// Run on production
-			conf.setNumWorkers(3);
+			conf.setNumWorkers(4);
 			conf.setMaxSpoutPending(4000);
 			System.out.println("twipLog: Submitting BasicTopology on production cluster");
 			try {

@@ -66,16 +66,17 @@ public class TweetSpout extends BaseRichSpout {
 
 		System.out.println("twipLog: TweetSpout using keyString : " + keyString);
 
-		//----------------Add keys and secrets here------------------------//
+		// ----------------Add keys and secrets here------------------------//
 		customerKey = "";
 		customerSecret = "";
 		accessToken = "";
 		accessSecret = "";
 
+
 		config = new ConfigurationBuilder().setOAuthConsumerKey(customerKey).setOAuthConsumerSecret(customerSecret)
 				.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessSecret);
-		config.setHttpProxyHost("www-proxy.idc.oracle.com");
-		config.setHttpProxyPort(80);
+		// config.setHttpProxyHost("www-proxy.idc.oracle.com");
+		// config.setHttpProxyPort(80);
 
 		redis = RedisUtils.getRedis();
 		if (redis != null) {
