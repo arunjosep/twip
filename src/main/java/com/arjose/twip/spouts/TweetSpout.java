@@ -67,14 +67,6 @@ public class TweetSpout extends BaseRichSpout {
 		System.out.println("twipLog: TweetSpout using keyString : " + keyString);
 
 		// ----------------Add keys and secrets here------------------------//
-		customerKey = "";
-		customerSecret = "";
-		accessToken = "";
-		accessSecret = "";
-		customerKey = "kDJe2AaktKs4KVH2da6aQf2pb";
-		customerSecret = "ayiyTPcYXMXQt1djm31LvaTgPkg3QL1VoN2Jy1Zubn40u8dNV3";
-		accessToken = "53290546-SBMpjIdpb0hENOmo3Xn5MHZsocf67O0tRg6bdhWXI";
-		accessSecret = "QZ2ELfuBVyI5dhH5dt54Mf091vsNtBeChCiSYbyii9OOW";
 
 		config = new ConfigurationBuilder().setOAuthConsumerKey(customerKey).setOAuthConsumerSecret(customerSecret)
 				.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessSecret);
