@@ -37,5 +37,10 @@ public interface CommandlineArgs {
 	 * Run on Production cluster. If not passed runs on local cluster.
 	 */
 	public static final String S_PROD_CLUSTER = "-prod";
+	
+	/**
+	 * Run sentiment analysis if passed.
+	 */
+	public static final String S_RUN_SENTIMENT = "-sentiment";
 
 }

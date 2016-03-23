@@ -60,6 +60,10 @@ public class CommandParser implements CommandlineArgs {
 				argsMap.put(S_PROD_CLUSTER, true);
 				info(S_PROD_CLUSTER);
 
+			} else if (S_RUN_SENTIMENT.equals(args[i])) {
+				argsMap.put(S_RUN_SENTIMENT, true);
+				info(S_RUN_SENTIMENT);
+
 			} else {
 				log("Argument unrecognized " + args[i]);
 			}

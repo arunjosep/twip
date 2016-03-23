@@ -70,6 +70,7 @@ public class CompareBolt implements IRichBolt {
 					if (tweet.toUpperCase().contains(word.toUpperCase())) {
 						if (connected) {
 							redis.incr("compare:" + sourceKey.toLowerCase() + ":" + word.toLowerCase());
+							redis.incr("compare:" + sourceKey.toLowerCase());
 							redis.incr("compare:total_count");
 						}
 						values = new Values(tweet, word);
@@ -82,10 +83,9 @@ public class CompareBolt implements IRichBolt {
 				for (String word : candidates.split(Pattern.quote(","))) {
 					if (tweet.toUpperCase().contains(word.toUpperCase())) {
 						if (connected) {
-							Long vote = redis.incr("voteCount:" + word.toLowerCase());
-							Long total = redis.incr("vote:total_count");
-							double perc = (vote * 100.0) / total;
-							redis.set("votePercent:" + word.toLowerCase(), String.format("%.2f", perc));
+							redis.incr("vote:" + word.toLowerCase());
+							redis.incr("vote:total_count");
+
 						}
 						values = new Values(tweet, word);
 						collector.emit(values);

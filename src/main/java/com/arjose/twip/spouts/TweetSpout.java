@@ -71,24 +71,48 @@ public class TweetSpout extends BaseRichSpout {
 		customerSecret = "";
 		accessToken = "";
 		accessSecret = "";
-
+		customerKey = "kDJe2AaktKs4KVH2da6aQf2pb";
+		customerSecret = "ayiyTPcYXMXQt1djm31LvaTgPkg3QL1VoN2Jy1Zubn40u8dNV3";
+		accessToken = "53290546-SBMpjIdpb0hENOmo3Xn5MHZsocf67O0tRg6bdhWXI";
+		accessSecret = "QZ2ELfuBVyI5dhH5dt54Mf091vsNtBeChCiSYbyii9OOW";
 
 		config = new ConfigurationBuilder().setOAuthConsumerKey(customerKey).setOAuthConsumerSecret(customerSecret)
 				.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessSecret);
-		// config.setHttpProxyHost("www-proxy.idc.oracle.com");
-		// config.setHttpProxyPort(80);
 
 		redis = RedisUtils.getRedis();
 		if (redis != null) {
 			connected = true;
 			redis.incr("conn:TweetSpout");
+			String ProxyHost;
+			Integer ProxyPort;
+			try {
+				ProxyHost = (String) redis.get("config:ProxyHost");
+			} catch (Exception ex) {
+				ProxyHost = "";
+			}
+			try {
+				ProxyPort = Integer.parseInt((String) redis.get("config:ProxyPort"));
+			} catch (Exception ex) {
+				ProxyPort = 0;
+			}
+			if (ProxyHost != null && !ProxyHost.isEmpty() && ProxyPort != 0) {
+				config.setHttpProxyHost(ProxyHost);
+				config.setHttpProxyPort(ProxyPort);
+				System.out.println("twipLog: Proxy set to [" + ProxyHost + ":" + ProxyPort + "]");
+			}
 		}
 
 		String[] keys = keyString.split(Pattern.quote(","));
 
-		try {
+		try
+
+		{
 			fact = new TwitterStreamFactory(config.build());
-		} catch (Exception ex) {
+		} catch (
+
+		Exception ex)
+
+		{
 			System.out.println("twipLog: TwitterStreamFactory config failed.");
 			ex.printStackTrace();
 			return;
@@ -96,7 +120,9 @@ public class TweetSpout extends BaseRichSpout {
 
 		twitterStream = fact.getInstance();
 
-		if (twitterStream == null) {
+		if (twitterStream == null)
+
+		{
 			System.out.println("twipLog: TwitterStreamFactory did not generate an instance for twitterStream");
 			return;
 		}
@@ -105,21 +131,28 @@ public class TweetSpout extends BaseRichSpout {
 
 		FilterQuery tweetFilterQuery = new FilterQuery();
 		tweetFilterQuery.language(new String[] { "en" });
-		if (keys.length != 0) {
+		if (keys.length != 0)
+
+		{
 			// System.out.println("twipLog: Tracking: " + keyString);
 			tweetFilterQuery.track(keys);
 
 		}
 
 		System.out.println("twipLog: TweetSpout about to open " + (fire ? "FIRE" : "Filtered") + " Hose ");
-		if (!fire) {
+		if (!fire)
+
+		{
 			twitterStream.filter(tweetFilterQuery);
 			// Using sample() clears the filters and opens twitter's
 			// SampleStream.
 			// twitterStream.sample();
-		} else {
+		} else
+
+		{
 			twitterStream.firehose(1);
 		}
+
 	}
 
 	public void nextTuple() {

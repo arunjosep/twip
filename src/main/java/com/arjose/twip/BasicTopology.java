@@ -1,6 +1,7 @@
 package com.arjose.twip;
 
 import java.util.HashMap;
+import java.util.regex.Pattern;
 
 import com.arjose.twip.bolts.CompareBolt;
 import com.arjose.twip.bolts.HashBolt;
@@ -8,6 +9,8 @@ import com.arjose.twip.bolts.SentimentBolt;
 import com.arjose.twip.spouts.TweetSpout;
 import com.arjose.twip.util.CommandParser;
 import com.arjose.twip.util.CommandlineArgs;
+import com.arjose.twip.util.RedisUtils;
+import com.lambdaworks.redis.api.sync.RedisCommands;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
@@ -22,6 +25,14 @@ public class BasicTopology {
 
 		TopologyBuilder builder = new TopologyBuilder();
 		Config conf = new Config();
+		RedisCommands redis;
+		Boolean connected = false;
+
+		redis = RedisUtils.getRedis();
+		if (redis != null) {
+			connected = true;
+			redis.flushall();
+		}
 
 		/* *** Parse command line args *** */
 		HashMap argsMap = CommandParser.parseList(args);
@@ -34,18 +45,36 @@ public class BasicTopology {
 				? argsMap.get(CommandlineArgs.S_OPEN_FIRE) : false);
 		Boolean runProd = (Boolean) ((argsMap.get(CommandlineArgs.S_PROD_CLUSTER) != null)
 				? argsMap.get(CommandlineArgs.S_PROD_CLUSTER) : false);
+		Boolean runSent = (Boolean) ((argsMap.get(CommandlineArgs.S_RUN_SENTIMENT) != null)
+				? argsMap.get(CommandlineArgs.S_RUN_SENTIMENT) : false);
 		Long ttl = (Long) ((argsMap.get(CommandlineArgs.D_TTL_SEC) != null) ? argsMap.get(CommandlineArgs.D_TTL_SEC)
 				: 90L);
+
+		String[] skeys = searchKeys.split(Pattern.quote(","));
+		for (String key : skeys) {
+			if (connected) {
+				redis.sadd("keys:hash", key);
+			}
+		}
+		skeys = candidates.split(Pattern.quote(","));
+		for (String key : skeys) {
+			if (connected) {
+				redis.sadd("keys:compare", key);
+			}
+		}
 
 		/* *** Define topology *** */
 		System.out.println("twipLog: BasicTopology starting up.");
 
 		builder.setSpout("TweetDhaara", new TweetSpout(searchKeys, openFire));
-		builder.setBolt("SentimentsWhole", new SentimentBolt(), 10).shuffleGrouping("TweetDhaara");
+
 		builder.setBolt("SortHashTags", new HashBolt(searchKeys), 3).shuffleGrouping("TweetDhaara");
 		builder.setBolt("CountThroughKey", new CompareBolt(candidates), 3).shuffleGrouping("SortHashTags");
 		builder.setBolt("Election", new CompareBolt(candidates), 3).shuffleGrouping("TweetDhaara");
-		builder.setBolt("SentimentsThroughKeys", new SentimentBolt(), 10).shuffleGrouping("Election");
+		if (runSent) {
+			builder.setBolt("SentimentsWhole", new SentimentBolt(), 10).shuffleGrouping("TweetDhaara");
+			builder.setBolt("SentimentsThroughKeys", new SentimentBolt(), 10).shuffleGrouping("Election");
+		}
 
 		/* *** End of topology *** */
 

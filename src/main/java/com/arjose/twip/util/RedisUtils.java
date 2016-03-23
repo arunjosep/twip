@@ -26,7 +26,7 @@ public class RedisUtils {
 	 * @return RedisCommands
 	 */
 	public static synchronized RedisCommands<String, String> getRedis() {
-		System.out.println("twipLog: getRedis()");
+		// System.out.println("twipLog: getRedis()");
 		if(redis==null){
 			openRedis();
 		}		
