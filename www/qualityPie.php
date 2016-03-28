@@ -4,21 +4,22 @@
     function showChart() {
 
     var chart = new CanvasJS.Chart("qualitypie",
-    {  
+    { backgroundColor: null,
       legend: {
                horizontalAlign: "center",
                verticalAlign: "bottom",
-               fontFamily: "Book Antiqua",
-               fontSize: 15
+               fontFamily: "Montserrat",
+               fontSize: 15,
+               fontColor: "#16a085" 
       },
       data: [{
 	       type: "doughnut",
 	       dataPoints: dps,
                showInLegend: true,
                startAngle:  -90,
-               indexLabelFontFamily: "Book Antiqua",
+               indexLabelFontFamily: "Montserrat",
                indexLabelFontSize: 16,
-               indexLabelFontColor: "#888888",
+               indexLabelFontColor: "#16a085",
                indexLabelPlacement: "inside"
 	     }
      ]});
@@ -27,7 +28,7 @@
   </script>
   
 
-<div id="qualitypie" style="height: 300px; width: 100%;">
+<div id="qualitypie" class ="subGraphInner" style="height: 300px;">
 <?php
 $redis=new Redis();
 $redis->connect("localhost",6379);

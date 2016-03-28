@@ -5,12 +5,13 @@
 
     var chart = new CanvasJS.Chart("comparepie",
     { 
+	  backgroundColor: null,
       data: [{
 	       type: "pie",
 	       dataPoints: dps,
-               indexLabelFontFamily: "Book Antiqua",
+               indexLabelFontFamily: "Montserrat",
                indexLabelFontSize: 16,
-               indexLabelFontColor: "#888888",
+               indexLabelFontColor: "#16a085",
                indexLabelPlacement: "outside"
 	     }
      ]});
@@ -19,7 +20,7 @@
   </script>
   
 
-<div id="comparepie" style="height: 300px; width: 100%;">
+<div id="comparepie" class ="subGraphInner" style="height: 300px;">
 <?php
 $redis=new Redis();
 $redis->connect("localhost",6379);
@@ -31,6 +32,7 @@ var dps = [{ y:0}
 <?php
 foreach ($keys as $key) {
     $count = $redis->get("vote:".$key);
+    $count = empty($count)?0:$count;
     echo ",{indexLabel:\"".$key."\", y:".$count."}";
 }
 ?>

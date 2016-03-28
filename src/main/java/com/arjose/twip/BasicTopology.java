@@ -27,11 +27,12 @@ public class BasicTopology {
 		Config conf = new Config();
 		RedisCommands redis;
 		Boolean connected = false;
+		String ProxyHost = "";
+		Integer ProxyPort = 0;
 
 		redis = RedisUtils.getRedis();
 		if (redis != null) {
 			connected = true;
-			redis.flushall();
 		}
 
 		/* *** Parse command line args *** */
@@ -41,14 +42,26 @@ public class BasicTopology {
 				? argsMap.get(CommandlineArgs.D_HASH_TAG) : "");
 		String candidates = (String) ((argsMap.get(CommandlineArgs.D_COMPARE_TAGS) != null)
 				? argsMap.get(CommandlineArgs.D_COMPARE_TAGS) : "");
-		Boolean openFire = (Boolean) ((argsMap.get(CommandlineArgs.S_OPEN_FIRE) != null)
-				? argsMap.get(CommandlineArgs.S_OPEN_FIRE) : false);
-		Boolean runProd = (Boolean) ((argsMap.get(CommandlineArgs.S_PROD_CLUSTER) != null)
-				? argsMap.get(CommandlineArgs.S_PROD_CLUSTER) : false);
-		Boolean runSent = (Boolean) ((argsMap.get(CommandlineArgs.S_RUN_SENTIMENT) != null)
-				? argsMap.get(CommandlineArgs.S_RUN_SENTIMENT) : false);
+		Boolean openFire = ((argsMap.get(CommandlineArgs.S_OPEN_FIRE) != null) ? true : false);
+		Boolean runProd = ((argsMap.get(CommandlineArgs.S_PROD_CLUSTER) != null) ? true : false);
+		Boolean runSentW = ((argsMap.get(CommandlineArgs.S_RUN_SENT_W) != null) ? true : false);
+		Boolean runSentI = ((argsMap.get(CommandlineArgs.S_RUN_SENT_I) != null) ? true : false);
 		Long ttl = (Long) ((argsMap.get(CommandlineArgs.D_TTL_SEC) != null) ? argsMap.get(CommandlineArgs.D_TTL_SEC)
 				: 90L);
+
+		if (connected) {
+			try {
+				ProxyHost = (String) redis.get("config:ProxyHost");
+			} catch (Exception ex) {
+				ProxyHost = "";
+			}
+			try {
+				ProxyPort = Integer.parseInt((String) redis.get("config:ProxyPort"));
+			} catch (Exception ex) {
+				ProxyPort = 0;
+			}
+			redis.flushall();
+		}
 
 		String[] skeys = searchKeys.split(Pattern.quote(","));
 		for (String key : skeys) {
@@ -66,14 +79,30 @@ public class BasicTopology {
 		/* *** Define topology *** */
 		System.out.println("twipLog: BasicTopology starting up.");
 
-		builder.setSpout("TweetDhaara", new TweetSpout(searchKeys, openFire));
+		builder.setSpout("TweetDhaara", new TweetSpout(searchKeys, openFire, ProxyHost, ProxyPort));
 
 		builder.setBolt("SortHashTags", new HashBolt(searchKeys), 3).shuffleGrouping("TweetDhaara");
 		builder.setBolt("CountThroughKey", new CompareBolt(candidates), 3).shuffleGrouping("SortHashTags");
 		builder.setBolt("Election", new CompareBolt(candidates), 3).shuffleGrouping("TweetDhaara");
-		if (runSent) {
+		if (runSentW) {
 			builder.setBolt("SentimentsWhole", new SentimentBolt(), 10).shuffleGrouping("TweetDhaara");
+			if (connected) {
+				redis.set("config:sentW", "true");
+			}
+		} else {
+			if (connected) {
+				redis.set("config:sentW", "false");
+			}
+		}
+		if (runSentI) {
 			builder.setBolt("SentimentsThroughKeys", new SentimentBolt(), 10).shuffleGrouping("Election");
+			if (connected) {
+				redis.set("config:sentI", "true");
+			}
+		} else {
+			if (connected) {
+				redis.set("config:sentI", "false");
+			}
 		}
 
 		/* *** End of topology *** */

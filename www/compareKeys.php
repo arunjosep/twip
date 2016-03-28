@@ -1,16 +1,18 @@
 <style>
 .inCk{
     float: left;
-    background-color: #1f7a1f;
-    height:14px;
+    background-color: #16a085;
+    height:12px;
     overflow: hidden;
+    margin:3px;
+    box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.35) inset;
 }
 .outCk{
-    background-color: #c2f0c2;
-    height:14px;
+    background-color: #ffffff;
+    height:18px;
     overflow: hidden;
     margin-bottom:7px;
-    box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3) ;
 }
 </style>
 

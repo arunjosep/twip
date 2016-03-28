@@ -26,7 +26,7 @@ public class CommandParser implements CommandlineArgs {
 
 		for (int i = 0; i < args.length; i++) {
 
-			if (D_HASH_TAG.equals(args[i])) {
+			if (D_HASH_TAG.equalsIgnoreCase(args[i])) {
 				if (i + 1 < args.length) {
 					argsMap.put(D_HASH_TAG, args[i + 1]);
 					info(D_HASH_TAG, args[++i]);
@@ -34,7 +34,7 @@ public class CommandParser implements CommandlineArgs {
 					warn(D_HASH_TAG, "hash tag or key to search for");
 				}
 
-			} else if (D_COMPARE_TAGS.equals(args[i])) {
+			} else if (D_COMPARE_TAGS.equalsIgnoreCase(args[i])) {
 				if (i + 1 < args.length) {
 					argsMap.put(D_COMPARE_TAGS, args[i + 1]);
 					info(D_COMPARE_TAGS, args[++i]);
@@ -42,7 +42,7 @@ public class CommandParser implements CommandlineArgs {
 					warn(D_COMPARE_TAGS, "words to compare");
 				}
 
-			} else if (D_TTL_SEC.equals(args[i])) {
+			} else if (D_TTL_SEC.equalsIgnoreCase(args[i])) {
 				if (i + 1 == args.length) {
 					warn(D_TTL_SEC, "time to run in local cluster in seconds");
 				} else if (!checkIfNum(args[i + 1])) {
@@ -52,20 +52,25 @@ public class CommandParser implements CommandlineArgs {
 					info(D_TTL_SEC, args[++i]);
 				}
 
-			} else if (S_OPEN_FIRE.equals(args[i])) {
+			} else if (S_OPEN_FIRE.equalsIgnoreCase(args[i])) {
 				argsMap.put(S_OPEN_FIRE, true);
 				info(S_OPEN_FIRE);
 
-			} else if (S_PROD_CLUSTER.equals(args[i])) {
+			} else if (S_PROD_CLUSTER.equalsIgnoreCase(args[i])) {
 				argsMap.put(S_PROD_CLUSTER, true);
 				info(S_PROD_CLUSTER);
 
-			} else if (S_RUN_SENTIMENT.equals(args[i])) {
-				argsMap.put(S_RUN_SENTIMENT, true);
-				info(S_RUN_SENTIMENT);
+			} else if (S_RUN_SENT_W.equalsIgnoreCase(args[i])) {
+				argsMap.put(S_RUN_SENT_W, true);
+				info(S_RUN_SENT_W);
+
+			} else if (S_RUN_SENT_I.equalsIgnoreCase(args[i])) {
+				argsMap.put(S_RUN_SENT_I, true);
+				info(S_RUN_SENT_I);
 
 			} else {
-				log("Argument unrecognized " + args[i]);
+				log("Argument unrecognized " + args[i]
+						+ "\nUsage:\n  -keys\n  -compare\n  -ttl\n  -prod\n  -sentW\n  -sentI");
 			}
 		}
 		return argsMap;

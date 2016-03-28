@@ -13,24 +13,20 @@
                 ]);
 
     var chart = new CanvasJS.Chart("sentimentpie",
-    {  
+    { backgroundColor: null,
       legend: {
                horizontalAlign: "center",
                verticalAlign: "bottom",
-               fontFamily: "Book Antiqua",
-               fontSize: 15
+               fontFamily: "Montserrat",
+               fontSize: 14,
+	       fontColor: "#16a085"
       },
       title:{
         text: "All Filtered Tweets",
-        fontFamily: "Arial",
-        fontSize: 18,
-        fontColor: "#555599",
-      },
-      legend:{
-        fontFamily: "Arial",
-        fontSize: 13,
-        fontColor: "#555599",
-        horizontalAlign: "center"
+        fontFamily: "Montserrat",
+        fontSize: 19,
+        fontColor: "#16a085",
+        fontWeight:"normal"
       },
       colorSet: "sentimentColors",
       data: [{
@@ -44,26 +40,36 @@
   }
 </script>
   
-
-<div id="sentimentpie" style="height: 300px; width: 100%;">
 <?php
 $redis=new Redis();
 $redis->connect("localhost",6379);
+$sentW = $redis->get("config:sentW");
+$sentW = ($sentW==="true");
 
-$vneg = $redis->get("sentiment:0");
-$neg = $redis->get("sentiment:1");
-$neutral = $redis->get("sentiment:2");
-$pos = $redis->get("sentiment:3");
-$vpos = $redis->get("sentiment:4");
+if($sentW){
+	$vneg = $redis->get("sentiment:0");
+	$neg = $redis->get("sentiment:1");
+	$neutral = $redis->get("sentiment:2");
+	$pos = $redis->get("sentiment:3");
+	$vpos = $redis->get("sentiment:4");
 
 
-$vneg = empty($vneg)?0:$vneg;
-$neg = empty($neg)?0:$neg;
-$neutral = empty($neutral)?0:$neutral;
-$pos = empty($pos)?0:$pos;
-$vpos = empty($vpos)?0:$vpos;
-
+	$vneg = empty($vneg)?0.01:$vneg;
+	$neg = empty($neg)?0.01:$neg;
+	$neutral = empty($neutral)?0.01:$neutral;
+	$pos = empty($pos)?0.01:$pos;
+	$vpos = empty($vpos)?0.01:$vpos;
+}
 ?>
+
+<div id="sentimentpie" class ="subGraphInner"
+<?php 
+	if ($sentW){
+		echo "style=\"height: 320px;\"";
+	}
+?>
+>
+
 
 <script>
 
@@ -74,8 +80,18 @@ var dps = [
 {legendText: \"Positive\", y:".$pos."},
 {legendText: \"Very Positive\", y:".$vpos."}"; ?>
 ]; 
-showChart();
+
+<?php 
+	if ($sentW){
+		echo "showChart();";
+	}
+?>
 
 </script> 
+<?php 
+	if (!$sentW){
+		echo "Nothing to see here! Enable sentiment analysis for filtered tweets to see mind-blowing analytics.";
+	}
+?>
 </div>
 

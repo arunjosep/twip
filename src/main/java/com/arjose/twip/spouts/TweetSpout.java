@@ -37,6 +37,8 @@ public class TweetSpout extends BaseRichSpout {
 	RedisCommands redis;
 	Boolean connected = false;
 	String customerKey, customerSecret, accessToken, accessSecret;
+	String ProxyHost;
+	Integer ProxyPort;
 
 	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret,
 			String keyString, boolean fire) {
@@ -48,9 +50,12 @@ public class TweetSpout extends BaseRichSpout {
 		this.keyString = keyString;
 	}
 
-	public TweetSpout(String searchKeys, Boolean openFire) {
+	public TweetSpout(String searchKeys, Boolean openFire, String ProxyHost, Integer ProxyPort) {
 		this.fire = openFire;
 		this.keyString = searchKeys;
+
+		this.ProxyHost = ProxyHost;
+		this.ProxyPort = ProxyPort;
 
 		this.customerKey = "";
 		this.customerSecret = "";
@@ -75,25 +80,12 @@ public class TweetSpout extends BaseRichSpout {
 		if (redis != null) {
 			connected = true;
 			redis.incr("conn:TweetSpout");
-			String ProxyHost;
-			Integer ProxyPort;
-			try {
-				ProxyHost = (String) redis.get("config:ProxyHost");
-			} catch (Exception ex) {
-				ProxyHost = "";
-			}
-			try {
-				ProxyPort = Integer.parseInt((String) redis.get("config:ProxyPort"));
-			} catch (Exception ex) {
-				ProxyPort = 0;
-			}
-			if (ProxyHost != null && !ProxyHost.isEmpty() && ProxyPort != 0) {
-				config.setHttpProxyHost(ProxyHost);
-				config.setHttpProxyPort(ProxyPort);
-				System.out.println("twipLog: Proxy set to [" + ProxyHost + ":" + ProxyPort + "]");
-			}
 		}
-
+		if (ProxyHost != null && !ProxyHost.isEmpty() && ProxyPort != 0) {
+			config.setHttpProxyHost(ProxyHost);
+			config.setHttpProxyPort(ProxyPort);
+			System.out.println("twipLog: Proxy set to [" + ProxyHost + ":" + ProxyPort + "]");
+		}
 		String[] keys = keyString.split(Pattern.quote(","));
 
 		try

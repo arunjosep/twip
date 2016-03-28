@@ -18,16 +18,19 @@
 
 .eff{
     float: left;
-    background-color:#5c5c8a;
-    height:14px;
+    height:12px;
     overflow: hidden;
+    margin-top:3px;
+    margin-bottom:3px;
+    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.3) inset;
 }
 
 .outEff{
-    background-color:#e6e6e6;
-    height:14px;
+    background-color: #ffffff;
+    height:18px;
     overflow: hidden;
     margin-bottom:7px;
+padding-left:3px;
     box-shadow: 2px 2px 2px rgba(0, 0, 0, 0.3);
 }
 </style>
