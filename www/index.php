@@ -83,9 +83,20 @@ sup{
 
 .subGraphInner{
     vertical-align: middle;
-	border-radius: 4px; 
+    border-radius: 4px; 
     background-color:#FFFFFF;
     box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4) ;
+}
+
+.sentimentCandGraph{
+    vertical-align: middle;
+    border-radius: 4px; 
+    background-color:#FFFFFF;
+    box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.4) ;
+    height: 150px; 
+    width: 150px; 
+    margin:5px; 
+    float:left;
 }
 
 .subData{
@@ -95,6 +106,7 @@ sup{
     display: table-cell;
     
 }
+
 #sentiments{
     color:#999999;
     text-align: center;
@@ -146,65 +158,34 @@ sup{
     border-radius:4px;
 }
 
-#fullcredits{
-
-}
-
 </style>
 
 <script src="jquery-latest.js"></script>
 <script>
-    var quickTimeout=700;
+    var quickTimeout=1000;
     var slowTimeout=4200;
     var showall=true;
 
     $(document).ready(function(){
 
-	    $(".subContent").hide(250);
-	    $("#subSearchContent").toggle(250);
+	$(".subContent").hide(250);
+	$("#subSearchContent").toggle(250);
         $("#fullcredits").hide();
 
-        setInterval(function() {
+        setInterval(function quickreload() {
             $("#hashKeys").load("hashKeys.php");
-        }, quickTimeout);
-
-        setInterval(function() {
             $("#compareKeys").load("compareKeys.php");
-        }, quickTimeout);
-
-        setInterval(function() {
             $("#filterQuality").load("filterQuality.php");
-        }, quickTimeout);
-
-        setInterval(function() {
             $("#hashCount").load("hashTotal.php");
-        }, quickTimeout);
-
-        setInterval(function() {
             $("#compareCount").load("compareTotal.php");
-        }, quickTimeout);
-
-        setInterval(function() {
             $("#comparePerc").load("comparePerc.php");
         }, quickTimeout);
 
-        setInterval(function() {
+        setInterval(function slowreload() {
             $("#hashPie").load("hashPie.php");
-        }, slowTimeout);
-
-        setInterval(function() {
             $("#comparePie").load("comparePie.php");
-        }, slowTimeout);
-
-        setInterval(function() {
             $("#qualityPie").load("qualityPie.php");
-        }, slowTimeout);
-
-		setInterval(function() {
             $("#sentimentPie").load("sentimentPie.php");
-        }, slowTimeout);
-
-        setInterval(function() {
             $("#sentiments").load("sentimentCandidatesPie.php");
         }, slowTimeout);
 
@@ -235,9 +216,10 @@ sup{
 
     });
 
-	function hideCredits(){ $("#fullcredits").hide(250); }
-	function showCredits(){ $("#fullcredits").show(250); }
 
+	function hideCredits(){ $("#fullcredits").hide(250); }
+
+	function showCredits(){ $("#fullcredits").show(250); }
 
 </script>
 
@@ -256,7 +238,7 @@ sup{
   <div class="subGraphWrapper" id="hashPie" <?php showGraphTitle(); ?>><?php showGraphText(); ?></div>
   <div id="hashKeys" class="subData" title="Key being used as filter 
 Number of tweets found with this key 
-Percent of tweets with this key in all filtered tweets"></div>
+Percent of tweets with this key in all filtered tweets (Sum of these percentages may be higher than 100 if more than one filter key is found in each tweet)"></div>
   </div>
 </div>
 
@@ -265,14 +247,14 @@ Percent of tweets with this key in all filtered tweets"></div>
  <div class="subContent" id="subSearchContent">
   <div class="subGraphWrapper" id="comparePie" <?php showGraphTitle(); ?>><?php showGraphText(); ?></div>
   <div id="compareKeys" class="subData" title="Key being searched for 
-Number of tweets found with this key in all filtered tweets
-Percent of tweets with this key in all tweets with at least one search key"></div>
+Occurrences of this key in all filtered tweets
+Occurrence of this key per occurrence of all keys counting once per tweet"></div>
  </div>
 </div>
 
 <div class="sub">
- <div class="subHead" id="subSent" title="Average sentiment of tweets">Sentiment</div>
- <div class="subContent" id="subSentContent" title="Sentiment analysis is restricted to processing grammatically correct english language sentenses and may not perfectly reflect the actual context and intent of tweets. Use this only as an indicator.">
+ <div class="subHead" id="subSent" title="Average sentiment of tweets that contain search keys">Sentiment</div>
+ <div class="subContent" id="subSentContent" title="Sentiment analysis is restricted to processing grammatically correct english language sentences and may not perfectly reflect the actual context and intent of tweets. Use this only as an indicator.">
   <div class="subGraphWrapper" id="sentimentPie" <?php showGraphTitle(); ?>></div>
   <div id="sentiments" class="subData"></div>
  </div>
@@ -283,15 +265,15 @@ Percent of tweets with this key in all tweets with at least one search key"></di
  <div class="subContent" id="subQualityContent">
   <div class="subGraphWrapper" id="qualityPie" <?php showGraphTitle(); ?>><?php showGraphText(); ?></div>
   <div id="filterQuality" class="subData" title="Key used as filter for input
-Number of tweets filtered with this key that contains at least one search key
-Percent of tweets that this filter brought in, in all filtered tweets"></div>
+Number of tweets this filter key brought in, that had a search key in it
+Percent of tweets this filter key brought in, that had a search key in it"></div>
  </div>
 </div>
 
 <div id="creditWrapper" style="text-align: center">  
 <div id="creditAnchor" onmouseleave="hideCredits()" onmouseenter="showCredits()">&nbsp;Created by Arun Jose&nbsp;
  <div id = "fullcredits"  onmouseleave="hideCredits()">
-Designed as dissertation requirement for M.Tech, BITS 2014HT12483 <br>
+Created in partial fulfilment of dissertation requirement for M.Tech at BITS<br>
 Cluster managed by <a href="http://storm.apache.org/" target="_blank">Apache Storm</a><br>
 Data provided by <a href="https://twitter.com/" target="_blank">Twitter</a><br>
 Twitter-Java interfacing through <a href="http://twitter4j.org" target="_blank">Twitter4j</a><br>

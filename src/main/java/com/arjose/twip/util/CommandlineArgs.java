@@ -39,13 +39,13 @@ public interface CommandlineArgs {
 	public static final String S_PROD_CLUSTER = "-prod";
 
 	/**
-	 * Run sentiment analysis for all input, if passed.
-	 */
-	public static final String S_RUN_SENT_W = "-sentW";
-
-	/**
 	 * Run sentiment analysis for each candidate, if passed.
 	 */
-	public static final String S_RUN_SENT_I = "-sentI";
+	public static final String S_RUN_SENT_I = "-sentiment";
+
+	/**
+	 * Run analysis only on non-retweet original tweets.
+	 */
+	public static final String S_NO_RT = "-noRT";
 
 }

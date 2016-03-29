@@ -46,7 +46,7 @@
 <?php
 $redis=new Redis();
 $redis->connect("localhost",6379);
-$sentI = $redis->get("config:sentI");
+$sentI = $redis->get("config:sentiment");
 $sentI = ($sentI==="true");
 $keys = $redis->smembers("keys:compare");
 
@@ -63,7 +63,7 @@ if($sentI){
 		$neutral = empty($neutral)?0.01:$neutral;
 		$pos = empty($pos)?0.01:$pos;
 		$vpos = empty($vpos)?0.01:$vpos;
-		echo "<div id=\"sentimentspie".$keyCount."\"class =\"subGraphInner\" style=\"height: 150px; width: 150px; margin-right:10px; float:left;\"></div>";
+		echo "<div id=\"sentimentspie".$keyCount."\"class =\"sentimentCandGraph\" style=\"\"></div>";
 		echo "<script> var dps = ["."{legendText: \"Very Negative\", y:".$vneg."},
 				{legendText: \"Negative\", y:".$neg."},
 				{legendText: \"Neutral\", y:".$neutral."},
@@ -73,7 +73,7 @@ if($sentI){
 		$keyCount++;
 	}
 } else {
-	echo "Nothing to see here! Enable sentiment analysis for search keys to see mind-blowing analytics.";
+	echo "<span style=\"font-size:80%;\">Nothing to see here!<br>Enable sentiment analysis for search keys to see mind-blowing analytics.</span>";
 }
 ?>
 

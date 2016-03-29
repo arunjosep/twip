@@ -66,12 +66,13 @@ public class TweetSpout extends BaseRichSpout {
 	@SuppressWarnings("rawtypes")
 	public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
 		TwitterStreamFactory fact = null;
-		queue = new LinkedBlockingQueue<String>(1000);
+		queue = new LinkedBlockingQueue<String>(10000);
 		this.spoutOutputCollector = collector;
 
 		System.out.println("twipLog: TweetSpout using keyString : " + keyString);
 
 		// ----------------Add keys and secrets here------------------------//
+
 
 		config = new ConfigurationBuilder().setOAuthConsumerKey(customerKey).setOAuthConsumerSecret(customerSecret)
 				.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessSecret);
@@ -159,6 +160,7 @@ public class TweetSpout extends BaseRichSpout {
 		Values values = new Values(tweet, isRetweet, favCount, retweetCount, name, replyTo, place, country);
 		if (connected)
 			redis.incr("dhaara:total_count");
+
 		spoutOutputCollector.emit(values);
 
 	}

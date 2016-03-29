@@ -22,7 +22,7 @@
 	       fontColor: "#16a085"
       },
       title:{
-        text: "All Filtered Tweets",
+        text: "All Tweets with Search Keys",
         fontFamily: "Montserrat",
         fontSize: 19,
         fontColor: "#16a085",
@@ -43,7 +43,7 @@
 <?php
 $redis=new Redis();
 $redis->connect("localhost",6379);
-$sentW = $redis->get("config:sentW");
+$sentW = $redis->get("config:sentiment");
 $sentW = ($sentW==="true");
 
 if($sentW){
@@ -88,10 +88,6 @@ var dps = [
 ?>
 
 </script> 
-<?php 
-	if (!$sentW){
-		echo "Nothing to see here! Enable sentiment analysis for filtered tweets to see mind-blowing analytics.";
-	}
-?>
+
 </div>
 

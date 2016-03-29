@@ -60,17 +60,17 @@ public class CommandParser implements CommandlineArgs {
 				argsMap.put(S_PROD_CLUSTER, true);
 				info(S_PROD_CLUSTER);
 
-			} else if (S_RUN_SENT_W.equalsIgnoreCase(args[i])) {
-				argsMap.put(S_RUN_SENT_W, true);
-				info(S_RUN_SENT_W);
-
 			} else if (S_RUN_SENT_I.equalsIgnoreCase(args[i])) {
 				argsMap.put(S_RUN_SENT_I, true);
 				info(S_RUN_SENT_I);
 
+			} else if (S_NO_RT.equalsIgnoreCase(args[i])) {
+				argsMap.put(S_NO_RT, true);
+				info(S_NO_RT);
+
 			} else {
 				log("Argument unrecognized " + args[i]
-						+ "\nUsage:\n  -keys\n  -compare\n  -ttl\n  -prod\n  -sentW\n  -sentI");
+						+ "\nUsage:\n  -keys\n  -compare\n  -ttl\n  -prod\n  -sentiment");
 			}
 		}
 		return argsMap;

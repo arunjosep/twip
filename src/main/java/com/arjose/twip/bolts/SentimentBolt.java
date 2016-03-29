@@ -56,21 +56,13 @@ public class SentimentBolt extends BaseRichBolt {
 		int sentiment = findSentiment(tweet);
 		sentiment = (sentiment >= 0 && sentiment <= 4) ? sentiment : 2;
 		// System.out.println("twipLog: Sent: " + sentiment + " : " + tweet);
-		if (sourceKey == null) {
-			// If sourceKey is null, input is coming directly from source.
-			// So count only total sentiments
-			if (connected) {
-				redis.incr("sentiment:total_count");
-				redis.incr("sentiment:" + sentiment);
-			}
-		} else {
-			// If sourceKey is present, source is sorted.
-			// Save count based on candidate key.
-			if (connected) {
-				redis.incr("sentiment:" + sourceKey.toLowerCase() + ":" + sentiment);
-				redis.incr("sentiment:" + sourceKey.toLowerCase() + ":" + "total_count");
-			}
+
+		if (connected) {
+			redis.incr("sentiment:" + sourceKey.toLowerCase() + ":" + sentiment);
+			redis.incr("sentiment:" + sentiment);
+			redis.incr("sentiment:" + sourceKey.toLowerCase() + ":" + "total_count");
 		}
+
 		collector.ack(tuple);
 	}
 

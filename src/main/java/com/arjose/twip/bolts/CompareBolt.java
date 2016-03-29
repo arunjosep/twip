@@ -66,22 +66,34 @@ public class CompareBolt implements IRichBolt {
 			if (sourceKey != null) {
 				// sourceKey is available only if a HashBolt sorted the tweets
 				// based on how it found the tweet
+				if (connected) {
+					redis.incr("compare:in_count");
+				}
+				boolean found = false;
 				for (String word : candidates.split(Pattern.quote(","))) {
 					if (tweet.toUpperCase().contains(word.toUpperCase())) {
+						found = true;
 						if (connected) {
 							redis.incr("compare:" + sourceKey.toLowerCase() + ":" + word.toLowerCase());
-							redis.incr("compare:" + sourceKey.toLowerCase());
 							redis.incr("compare:total_count");
 						}
 						values = new Values(tweet, word);
 						collector.emit(values);
 					}
 				}
+				if (connected && found) {
+					redis.incr("compare:" + sourceKey.toLowerCase());
+				}
 			} else {
 				// If sourceKey is null, input is coming directly from source.
 				// So count based on candidates only.
+				if (connected) {
+					redis.incr("vote:in_count");
+				}
+				boolean found = false;
 				for (String word : candidates.split(Pattern.quote(","))) {
 					if (tweet.toUpperCase().contains(word.toUpperCase())) {
+						found = true;
 						if (connected) {
 							redis.incr("vote:" + word.toLowerCase());
 							redis.incr("vote:total_count");
@@ -90,6 +102,9 @@ public class CompareBolt implements IRichBolt {
 						values = new Values(tweet, word);
 						collector.emit(values);
 					}
+				}
+				if (connected && found) {
+					redis.incr("vote:key_found");
 				}
 			}
 		}

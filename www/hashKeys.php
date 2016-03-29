@@ -22,7 +22,7 @@ $redis=new Redis();
 $redis->connect("localhost",6379);
 
 $keys = $redis->smembers("keys:hash");
-$total = $redis->get("hash:total_count");
+$total = $redis->get("hash:in_count");
 foreach ($keys as $key) {
     $count = $redis->get("hash:".$key);
     $perc = number_format($count*100/$total,2);

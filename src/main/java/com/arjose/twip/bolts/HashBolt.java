@@ -23,13 +23,13 @@ import backtype.storm.tuple.Values;
  */
 public class HashBolt extends BaseRichBolt {
 	OutputCollector collector;
-	String searchKeys = "";
+	String sourceKeys = "";
 	RedisCommands redis;
 	Boolean connected = false;
 
-	public HashBolt(String searchKeys) {
-		if (searchKeys != null)
-			this.searchKeys = searchKeys;
+	public HashBolt(String sourceKeys) {
+		if (sourceKeys != null)
+			this.sourceKeys = sourceKeys;
 	}
 
 	public HashBolt() {
@@ -45,35 +45,33 @@ public class HashBolt extends BaseRichBolt {
 	}
 
 	public void execute(Tuple tuple) {
-
 		String tweet = tuple.getStringByField("tweet");
-		String isRetweet = tuple.getStringByField("isRetweet");
-		String favCount = tuple.getStringByField("favCount");
-		String retweetCount = tuple.getStringByField("retweetCount");
-		String name = tuple.getStringByField("name");
-		String replyTo = tuple.getStringByField("replyTo");
-		String place = tuple.getStringByField("place");
-		String country = tuple.getStringByField("country");
 		Values values = null;
-
-		if (searchKeys != null && !searchKeys.isEmpty()) {
-			for (String key : searchKeys.split(Pattern.quote(","))) {
+		boolean found = false;
+		if (sourceKeys != null && !sourceKeys.isEmpty()) {
+			if (connected) {
+				redis.incr("hash:in_count");
+			}
+			for (String key : sourceKeys.split(Pattern.quote(","))) {
 				if (tweet.toUpperCase().contains(key.toUpperCase())) {
+					found = true;
 					if (connected) {
 						redis.incr("hash:" + key.toLowerCase());
-						redis.incr("hash:total_count");
+						redis.incr("hash:out_count");
 					}
-					values = new Values(tweet, isRetweet, favCount, retweetCount, name, replyTo, place, country, key);
+					values = new Values(tweet, key);
 					collector.emit(values);
 				}
+			}
+			if (connected && found) {
+				redis.incr("hash:key_found");
 			}
 		}
 		collector.ack(tuple);
 	}
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("tweet", "isRetweet", "favCount", "retweetCount", "name", "replyTo", "place",
-				"country", "foundKey"));
+		declarer.declare(new Fields("tweet", "foundKey"));
 	}
 
 }

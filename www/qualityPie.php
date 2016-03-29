@@ -12,6 +12,13 @@
                fontSize: 15,
                fontColor: "#16a085" 
       },
+      title:{
+        text: "All Tweets with Source Keys",
+        fontFamily: "Montserrat",
+        fontSize: 19,
+        fontColor: "#16a085",
+        fontWeight:"normal"
+      },
       data: [{
 	       type: "doughnut",
 	       dataPoints: dps,
@@ -33,12 +40,12 @@
 $redis=new Redis();
 $redis->connect("localhost",6379);
 
-$vtotal = $redis->get("vote:total_count");
-$htotal = $redis->get("hash:total_count");
+$good = $redis->get("vote:key_found");
+$all = $redis->get("vote:in_count");
 ?>
 <script>
 var dps = [
-<?php echo "{legendText: \"Tweets that contain a search key\", y:".$vtotal."},{legendText: \"Tweets with a source key but not a filter key\", y:".($htotal-$vtotal)."}"; ?>
+<?php echo "{legendText: \"Search key present\", y:".$good."},{legendText: \"Search key not present\", y:".($all-$good)."}"; ?>
 ]; 
 showChart();
 </script>

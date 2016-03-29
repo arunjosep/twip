@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 
 import com.arjose.twip.bolts.CompareBolt;
 import com.arjose.twip.bolts.HashBolt;
+import com.arjose.twip.bolts.OriginBolt;
 import com.arjose.twip.bolts.SentimentBolt;
 import com.arjose.twip.spouts.TweetSpout;
 import com.arjose.twip.util.CommandParser;
@@ -44,8 +45,8 @@ public class BasicTopology {
 				? argsMap.get(CommandlineArgs.D_COMPARE_TAGS) : "");
 		Boolean openFire = ((argsMap.get(CommandlineArgs.S_OPEN_FIRE) != null) ? true : false);
 		Boolean runProd = ((argsMap.get(CommandlineArgs.S_PROD_CLUSTER) != null) ? true : false);
-		Boolean runSentW = ((argsMap.get(CommandlineArgs.S_RUN_SENT_W) != null) ? true : false);
 		Boolean runSentI = ((argsMap.get(CommandlineArgs.S_RUN_SENT_I) != null) ? true : false);
+		Boolean noRT = ((argsMap.get(CommandlineArgs.S_NO_RT) != null) ? true : false);
 		Long ttl = (Long) ((argsMap.get(CommandlineArgs.D_TTL_SEC) != null) ? argsMap.get(CommandlineArgs.D_TTL_SEC)
 				: 90L);
 
@@ -81,27 +82,31 @@ public class BasicTopology {
 
 		builder.setSpout("TweetDhaara", new TweetSpout(searchKeys, openFire, ProxyHost, ProxyPort));
 
-		builder.setBolt("SortHashTags", new HashBolt(searchKeys), 3).shuffleGrouping("TweetDhaara");
-		builder.setBolt("CountThroughKey", new CompareBolt(candidates), 3).shuffleGrouping("SortHashTags");
-		builder.setBolt("Election", new CompareBolt(candidates), 3).shuffleGrouping("TweetDhaara");
-		if (runSentW) {
-			builder.setBolt("SentimentsWhole", new SentimentBolt(), 10).shuffleGrouping("TweetDhaara");
+		builder.setBolt("RemoveRTs", new OriginBolt(), 3).shuffleGrouping("TweetDhaara");
+
+		if (noRT) {
+			builder.setBolt("SortHashTags", new HashBolt(searchKeys), 3).shuffleGrouping("RemoveRTs");
+			builder.setBolt("Election", new CompareBolt(candidates), 3).shuffleGrouping("RemoveRTs");
 			if (connected) {
-				redis.set("config:sentW", "true");
+				redis.set("config:noRT", "true");
 			}
 		} else {
+			builder.setBolt("SortHashTags", new HashBolt(searchKeys), 3).shuffleGrouping("TweetDhaara");
+			builder.setBolt("Election", new CompareBolt(candidates), 3).shuffleGrouping("TweetDhaara");
 			if (connected) {
-				redis.set("config:sentW", "false");
+				redis.set("config:noRT", "false");
 			}
 		}
+		builder.setBolt("CountThroughKey", new CompareBolt(candidates), 3).shuffleGrouping("SortHashTags");
+
 		if (runSentI) {
 			builder.setBolt("SentimentsThroughKeys", new SentimentBolt(), 10).shuffleGrouping("Election");
 			if (connected) {
-				redis.set("config:sentI", "true");
+				redis.set("config:sentiment", "true");
 			}
 		} else {
 			if (connected) {
-				redis.set("config:sentI", "false");
+				redis.set("config:sentiment", "false");
 			}
 		}
 
