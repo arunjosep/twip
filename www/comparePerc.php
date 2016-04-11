@@ -37,10 +37,10 @@ if ($isRTused){
     $title = $title."Only original tweets (non retweets) are used in this analysis.";
 }
 
-echo "<div class=\"outRT\" style=\"width:100px;\" title=\"".$title."\"><div class=\"inNonRT\" style=\"width:".$nortperc."%\"></div></div>";
+echo "<span style=\"float:left;\">RT&nbsp;</span><div class=\"outRT\" style=\"width:100px;\" title=\"".$title."\"><div class=\"inNonRT\" style=\"width:".$nortperc."%\"></div></div>";
 
 $vtotal = $redis->get("vote:key_found");
 $htotal = $redis->get("vote:in_count");
 $perc = number_format($vtotal*100/$htotal,2);
-echo $perc."%";
+echo "<div style=\"width:100px;float:right;text-align:right;\">".$perc."%</div>";
 ?>
