@@ -3,6 +3,7 @@ package com.arjose.twip.bolts;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.arjose.twip.util.KeyUtils;
 import com.arjose.twip.util.RedisUtils;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 
@@ -26,13 +27,18 @@ public class HashBolt extends BaseRichBolt {
 	String sourceKeys = "";
 	RedisCommands redis;
 	Boolean connected = false;
+	Boolean addHash = false;
 
-	public HashBolt(String sourceKeys) {
-		if (sourceKeys != null)
-			this.sourceKeys = sourceKeys;
-	}
+	public HashBolt(String sourceKeys, Boolean hash) {
+		if (hash != null)
+			addHash = hash;
 
-	public HashBolt() {
+		if (sourceKeys != null) {
+			if (addHash)
+				this.sourceKeys = KeyUtils.unHash(sourceKeys);
+			else
+				this.sourceKeys = sourceKeys;
+		}
 	}
 
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -53,7 +59,9 @@ public class HashBolt extends BaseRichBolt {
 				redis.incr("hash:in_count");
 			}
 			for (String key : sourceKeys.split(Pattern.quote(","))) {
-				if (tweet.toUpperCase().contains(key.toUpperCase())) {
+				key = key.trim();
+				if (tweet.toUpperCase().contains(key.toUpperCase())
+						|| (addHash && tweet.toUpperCase().contains("#" + key.toUpperCase()))) {
 					found = true;
 					if (connected) {
 						redis.incr("hash:" + key.toLowerCase());

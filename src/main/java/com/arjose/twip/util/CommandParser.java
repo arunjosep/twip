@@ -68,6 +68,10 @@ public class CommandParser implements CommandlineArgs {
 				argsMap.put(S_NO_RT, true);
 				info(S_NO_RT);
 
+			} else if (S_ADD_HASH.equalsIgnoreCase(args[i])) {
+				argsMap.put(S_ADD_HASH, true);
+				info(S_ADD_HASH);
+
 			} else {
 				log("Argument unrecognized " + args[i]
 						+ "\nUsage:\n  -keys\n  -compare\n  -ttl\n  -prod\n  -sentiment");

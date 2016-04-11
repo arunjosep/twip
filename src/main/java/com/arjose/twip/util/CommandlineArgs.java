@@ -48,4 +48,8 @@ public interface CommandlineArgs {
 	 */
 	public static final String S_NO_RT = "-noRT";
 
+	/**
+	 * Include key and #key in searches when only either is given.
+	 */
+	public static final String S_ADD_HASH = "-addHash";
 }

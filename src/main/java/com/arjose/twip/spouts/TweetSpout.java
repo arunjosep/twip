@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Pattern;
 
+import com.arjose.twip.util.KeyUtils;
 import com.arjose.twip.util.RedisUtils;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 
@@ -36,12 +37,13 @@ public class TweetSpout extends BaseRichSpout {
 	private String keyString = "";
 	RedisCommands redis;
 	Boolean connected = false;
-	String customerKey, customerSecret, accessToken, accessSecret;
+	Boolean addHash = false;
+	private String customerKey, customerSecret, accessToken, accessSecret;
 	String ProxyHost;
 	Integer ProxyPort;
 
-	public TweetSpout(String customerKey, String customerSecret, String accessToken, String accessSecret,
-			String keyString, boolean fire) {
+	public TweetSpout(String keyString, boolean fire, String customerKey, String customerSecret, String accessToken,
+			String accessSecret) {
 		this.customerKey = customerKey;
 		this.customerSecret = customerSecret;
 		this.accessToken = accessToken;
@@ -50,9 +52,12 @@ public class TweetSpout extends BaseRichSpout {
 		this.keyString = keyString;
 	}
 
-	public TweetSpout(String searchKeys, Boolean openFire, String ProxyHost, Integer ProxyPort) {
+	public TweetSpout(String keyString, Boolean openFire, Boolean hash, String ProxyHost, Integer ProxyPort) {
 		this.fire = openFire;
-		this.keyString = searchKeys;
+		this.keyString = keyString;
+		
+		if (hash != null)
+			addHash = hash;
 
 		this.ProxyHost = ProxyHost;
 		this.ProxyPort = ProxyPort;
@@ -69,6 +74,9 @@ public class TweetSpout extends BaseRichSpout {
 		queue = new LinkedBlockingQueue<String>(10000);
 		this.spoutOutputCollector = collector;
 
+		if (addHash)
+			keyString= KeyUtils.addHash(keyString);
+		
 		System.out.println("twipLog: TweetSpout using keyString : " + keyString);
 
 		// ----------------Add keys and secrets here------------------------//

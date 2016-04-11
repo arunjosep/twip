@@ -45,22 +45,40 @@ public class SentimentBolt extends BaseRichBolt {
 	@Override
 	public void execute(Tuple tuple) {
 		String tweet = tuple.getStringByField("tweet");
-		String sourceKey;
-		try {
+		String sourceKey, unique;
+
+		if (tuple.contains("foundKey"))
 			sourceKey = tuple.getStringByField("foundKey");
+		else
+			sourceKey = "";
+
+		try {
+			unique = tuple.getStringByField("unique");
 		} catch (IllegalArgumentException ex) {
-			sourceKey = null;
+			unique = null;
 		}
+
+		if (tuple.contains("unique"))
+			unique = tuple.getStringByField("unique");
+		else
+			unique = "";
+
 		tweet = tweet.replaceAll("[^A-Za-z0-9 ]", "");
 
 		int sentiment = findSentiment(tweet);
 		sentiment = (sentiment >= 0 && sentiment <= 4) ? sentiment : 2;
-		// System.out.println("twipLog: Sent: " + sentiment + " : " + tweet);
+		System.out.println("twipLog: Sent: " + sentiment + " : " + tweet);
 
-		if (connected) {
-			redis.incr("sentiment:" + sourceKey.toLowerCase() + ":" + sentiment);
-			redis.incr("sentiment:" + sentiment);
-			redis.incr("sentiment:" + sourceKey.toLowerCase() + ":" + "total_count");
+		if (connected && !unique.isEmpty()) {
+			if (unique.equalsIgnoreCase("false")) {
+				// One for each key found.
+				// Same tweet may be counted multiple times
+				redis.incr("sentiment:" + sourceKey.toLowerCase() + ":" + sentiment);
+				redis.incr("sentiment:" + sourceKey.toLowerCase() + ":" + "total_count");
+			} else {
+				// One for every tweet with at least one key
+				redis.incr("sentiment:" + sentiment);
+			}
 		}
 
 		collector.ack(tuple);

@@ -3,6 +3,7 @@ package com.arjose.twip.bolts;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.arjose.twip.util.KeyUtils;
 import com.arjose.twip.util.RedisUtils;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 
@@ -29,15 +30,23 @@ public class CompareBolt implements IRichBolt {
 	static int bernie = 0;
 	static int trump = 0;
 	String candidates = "";
+	Boolean addHash = false;
 	RedisCommands redis;
 	Boolean connected = false;
 
 	public CompareBolt() {
 	}
 
-	public CompareBolt(String candidates) {
-		if (candidates != null)
-			this.candidates = candidates;
+	public CompareBolt(String candidates, Boolean hash) {
+		if (hash != null)
+			addHash = hash;
+
+		if (candidates != null) {
+			if (addHash)
+				this.candidates = KeyUtils.unHash(candidates);
+			else
+				this.candidates = candidates;
+		}
 	}
 
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
@@ -55,14 +64,13 @@ public class CompareBolt implements IRichBolt {
 		String tweet = tuple.getStringByField("tweet");
 		String sourceKey;
 		Values values = null;
-
-		try {
+		
+		if (tuple.contains("foundKey"))
 			sourceKey = tuple.getStringByField("foundKey");
-		} catch (IllegalArgumentException ex) {
-			sourceKey = null;
-		}
+		else
+			sourceKey = "";
 
-		if (candidates != null && !candidates.isEmpty()) {
+		if (!candidates.isEmpty()) {
 			if (sourceKey != null) {
 				// sourceKey is available only if a HashBolt sorted the tweets
 				// based on how it found the tweet
@@ -71,18 +79,21 @@ public class CompareBolt implements IRichBolt {
 				}
 				boolean found = false;
 				for (String word : candidates.split(Pattern.quote(","))) {
-					if (tweet.toUpperCase().contains(word.toUpperCase())) {
+					word = word.trim();
+					if (tweet.toUpperCase().contains(word.toUpperCase())
+							|| (addHash && tweet.toUpperCase().contains("#" + word.toUpperCase()))) {
 						found = true;
 						if (connected) {
 							redis.incr("compare:" + sourceKey.toLowerCase() + ":" + word.toLowerCase());
 							redis.incr("compare:total_count");
 						}
-						values = new Values(tweet, word);
+						values = new Values(tweet, word, "false");
 						collector.emit(values);
 					}
 				}
 				if (connected && found) {
 					redis.incr("compare:" + sourceKey.toLowerCase());
+					values = new Values(tweet, "", "true");
 				}
 			} else {
 				// If sourceKey is null, input is coming directly from source.
@@ -92,19 +103,23 @@ public class CompareBolt implements IRichBolt {
 				}
 				boolean found = false;
 				for (String word : candidates.split(Pattern.quote(","))) {
-					if (tweet.toUpperCase().contains(word.toUpperCase())) {
+					word = word.trim();
+					if (tweet.toUpperCase().contains(word.toUpperCase())
+							|| (addHash && tweet.toUpperCase().contains("#" + word.toUpperCase()))) {
 						found = true;
 						if (connected) {
 							redis.incr("vote:" + word.toLowerCase());
 							redis.incr("vote:total_count");
 
 						}
-						values = new Values(tweet, word);
+						values = new Values(tweet, word, "false");
 						collector.emit(values);
 					}
 				}
 				if (connected && found) {
 					redis.incr("vote:key_found");
+					values = new Values(tweet, "", "true");
+					collector.emit(values);
 				}
 			}
 		}
@@ -113,7 +128,7 @@ public class CompareBolt implements IRichBolt {
 	}
 
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("tweet", "foundKey"));
+		declarer.declare(new Fields("tweet", "foundKey", "unique"));
 
 	}
 
