@@ -26,12 +26,12 @@ public class CommandParser implements CommandlineArgs {
 
 		for (int i = 0; i < args.length; i++) {
 
-			if (D_HASH_TAG.equalsIgnoreCase(args[i])) {
+			if (D_HASH_TAGS.equalsIgnoreCase(args[i])) {
 				if (i + 1 < args.length) {
-					argsMap.put(D_HASH_TAG, args[i + 1]);
-					info(D_HASH_TAG, args[++i]);
+					argsMap.put(D_HASH_TAGS, args[i + 1]);
+					info(D_HASH_TAGS, args[++i]);
 				} else {
-					warn(D_HASH_TAG, "hash tag or key to search for");
+					warn(D_HASH_TAGS, "hash tag or key to search for");
 				}
 
 			} else if (D_COMPARE_TAGS.equalsIgnoreCase(args[i])) {
@@ -40,6 +40,14 @@ public class CommandParser implements CommandlineArgs {
 					info(D_COMPARE_TAGS, args[++i]);
 				} else {
 					warn(D_COMPARE_TAGS, "words to compare");
+				}
+
+			} else if (D_PROXY.equalsIgnoreCase(args[i])) {
+				if (i + 1 < args.length) {
+					argsMap.put(D_PROXY, args[i + 1]);
+					info(D_PROXY, args[++i]);
+				} else {
+					warn(D_PROXY, "proxy host and port");
 				}
 
 			} else if (D_TTL_SEC.equalsIgnoreCase(args[i])) {
@@ -56,13 +64,13 @@ public class CommandParser implements CommandlineArgs {
 				argsMap.put(S_OPEN_FIRE, true);
 				info(S_OPEN_FIRE);
 
-			} else if (S_PROD_CLUSTER.equalsIgnoreCase(args[i])) {
-				argsMap.put(S_PROD_CLUSTER, true);
-				info(S_PROD_CLUSTER);
+			} else if (S_TEST_CLUSTER.equalsIgnoreCase(args[i])) {
+				argsMap.put(S_TEST_CLUSTER, true);
+				info(S_TEST_CLUSTER);
 
-			} else if (S_RUN_SENT_I.equalsIgnoreCase(args[i])) {
-				argsMap.put(S_RUN_SENT_I, true);
-				info(S_RUN_SENT_I);
+			} else if (S_RUN_SENT.equalsIgnoreCase(args[i])) {
+				argsMap.put(S_RUN_SENT, true);
+				info(S_RUN_SENT);
 
 			} else if (S_NO_RT.equalsIgnoreCase(args[i])) {
 				argsMap.put(S_NO_RT, true);

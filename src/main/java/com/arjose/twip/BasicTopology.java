@@ -11,6 +11,7 @@ import com.arjose.twip.bolts.TrendsBolt;
 import com.arjose.twip.spouts.TweetSpout;
 import com.arjose.twip.util.CommandParser;
 import com.arjose.twip.util.CommandlineArgs;
+import com.arjose.twip.util.KeyUtils;
 import com.arjose.twip.util.RedisUtils;
 import com.lambdaworks.redis.api.sync.RedisCommands;
 
@@ -41,41 +42,41 @@ public class BasicTopology {
 		/* *** Parse command line args *** */
 		HashMap argsMap = CommandParser.parseList(args);
 
-		String sourceKeys = (String) ((argsMap.get(CommandlineArgs.D_HASH_TAG) != null)
-				? argsMap.get(CommandlineArgs.D_HASH_TAG) : "");
+		String sourceKeys = (String) ((argsMap.get(CommandlineArgs.D_HASH_TAGS) != null)
+				? argsMap.get(CommandlineArgs.D_HASH_TAGS) : "");
 		String candidates = (String) ((argsMap.get(CommandlineArgs.D_COMPARE_TAGS) != null)
 				? argsMap.get(CommandlineArgs.D_COMPARE_TAGS) : "");
+		String proxy = (String) ((argsMap.get(CommandlineArgs.D_PROXY) != null) ? argsMap.get(CommandlineArgs.D_PROXY)
+				: "");
 		Boolean openFire = (argsMap.get(CommandlineArgs.S_OPEN_FIRE) != null);
-		Boolean runProd = (argsMap.get(CommandlineArgs.S_PROD_CLUSTER) != null);
-		Boolean runSentI = (argsMap.get(CommandlineArgs.S_RUN_SENT_I) != null);
+		Boolean runTest = (argsMap.get(CommandlineArgs.S_TEST_CLUSTER) != null);
+		Boolean runSent = (argsMap.get(CommandlineArgs.S_RUN_SENT) != null);
 		Boolean noRT = (argsMap.get(CommandlineArgs.S_NO_RT) != null);
 		Boolean addHash = (argsMap.get(CommandlineArgs.S_ADD_HASH) != null);
 		Long ttl = (Long) ((argsMap.get(CommandlineArgs.D_TTL_SEC) != null) ? argsMap.get(CommandlineArgs.D_TTL_SEC)
 				: 90L);
 
-		if (connected) {
-			try {
-				ProxyHost = (String) redis.get("config:ProxyHost");
-			} catch (Exception ex) {
-				ProxyHost = "";
-			}
-			try {
-				ProxyPort = Integer.parseInt((String) redis.get("config:ProxyPort"));
-			} catch (Exception ex) {
-				ProxyPort = 0;
-			}
-			redis.flushall();
+		try {
+			ProxyHost = (String) proxy.split(Pattern.quote(":"))[0];
+		} catch (Exception ex1) {
+			ProxyHost = "";
+		}
+		try {
+			ProxyPort = Integer.parseInt((String) proxy.split(Pattern.quote(":"))[1]);
+		} catch (Exception ex2) {
+			ProxyPort = 0;
 		}
 
-		String[] skeys = sourceKeys.split(Pattern.quote(","));
-		for (String key : skeys) {
-			if (connected) {
+		if (connected) {
+			redis.flushall();
+			String[] skeys = addHash ? (KeyUtils.unHash(sourceKeys).split(Pattern.quote(",")))
+					: sourceKeys.split(Pattern.quote(","));
+			for (String key : skeys) {
 				redis.sadd("keys:hash", key);
 			}
-		}
-		skeys = candidates.split(Pattern.quote(","));
-		for (String key : skeys) {
-			if (connected) {
+			skeys = addHash ? (KeyUtils.unHash(candidates).split(Pattern.quote(",")))
+					: candidates.split(Pattern.quote(","));
+			for (String key : skeys) {
 				redis.sadd("keys:compare", key);
 			}
 		}
@@ -107,7 +108,7 @@ public class BasicTopology {
 		builder.setBolt("CountThroughKey", new CompareBolt(candidates, addHash), 3).shuffleGrouping("SortHashTags");
 		builder.setBolt("TrendsWithCandidates", new TrendsBolt(addHash), 3).shuffleGrouping("Election");
 
-		if (runSentI) {
+		if (runSent) {
 			builder.setBolt("SentimentsThroughKeys", new SentimentBolt(), 10).shuffleGrouping("Election");
 			if (connected) {
 				redis.set("config:sentiment", "true");
@@ -122,10 +123,10 @@ public class BasicTopology {
 
 		// Run topology on local or production cluster
 
-		if (!runProd) {
+		if (runTest) {
 			// Run locally
 			// conf.setDebug(true);
-			conf.put(CommandlineArgs.D_HASH_TAG, sourceKeys);
+			conf.put(CommandlineArgs.D_HASH_TAGS, sourceKeys);
 			conf.put(CommandlineArgs.D_COMPARE_TAGS, candidates);
 
 			conf.setMaxTaskParallelism(50);

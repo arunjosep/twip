@@ -64,14 +64,14 @@ public class CompareBolt implements IRichBolt {
 		String tweet = tuple.getStringByField("tweet");
 		String sourceKey;
 		Values values = null;
-		
+
 		if (tuple.contains("foundKey"))
 			sourceKey = tuple.getStringByField("foundKey");
 		else
 			sourceKey = "";
 
 		if (!candidates.isEmpty()) {
-			if (sourceKey != null) {
+			if (!sourceKey.isEmpty()) {
 				// sourceKey is available only if a HashBolt sorted the tweets
 				// based on how it found the tweet
 				if (connected) {
@@ -94,6 +94,7 @@ public class CompareBolt implements IRichBolt {
 				if (connected && found) {
 					redis.incr("compare:" + sourceKey.toLowerCase());
 					values = new Values(tweet, "", "true");
+					collector.emit(values);
 				}
 			} else {
 				// If sourceKey is null, input is coming directly from source.

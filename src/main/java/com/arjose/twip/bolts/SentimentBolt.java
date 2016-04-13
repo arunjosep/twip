@@ -67,7 +67,7 @@ public class SentimentBolt extends BaseRichBolt {
 
 		int sentiment = findSentiment(tweet);
 		sentiment = (sentiment >= 0 && sentiment <= 4) ? sentiment : 2;
-		System.out.println("twipLog: Sent: " + sentiment + " : " + tweet);
+		// System.out.println("twipLog: Sent: " + sentiment + " : " + tweet);
 
 		if (connected && !unique.isEmpty()) {
 			if (unique.equalsIgnoreCase("false")) {

@@ -14,7 +14,7 @@ public interface CommandlineArgs {
 	/**
 	 * Used for passing hash-tag or search key.
 	 */
-	public static final String D_HASH_TAG = "-keys";
+	public static final String D_HASH_TAGS = "-keys";
 
 	/**
 	 * Used for passing words to compare in tweets containing search key. If
@@ -34,14 +34,14 @@ public interface CommandlineArgs {
 	public static final String S_OPEN_FIRE = "-fire";
 
 	/**
-	 * Run on Production cluster. If not passed runs on local cluster.
+	 * Run on local cluster. If not passed runs on production cluster.
 	 */
-	public static final String S_PROD_CLUSTER = "-prod";
+	public static final String S_TEST_CLUSTER = "-test";
 
 	/**
 	 * Run sentiment analysis for each candidate, if passed.
 	 */
-	public static final String S_RUN_SENT_I = "-sentiment";
+	public static final String S_RUN_SENT = "-sentiment";
 
 	/**
 	 * Run analysis only on non-retweet original tweets.
@@ -52,4 +52,9 @@ public interface CommandlineArgs {
 	 * Include key and #key in searches when only either is given.
 	 */
 	public static final String S_ADD_HASH = "-addHash";
+
+	/**
+	 * Proxy host and port. Ex: www.proxy.net:8080
+	 */
+	public static final String D_PROXY = "-proxy";
 }

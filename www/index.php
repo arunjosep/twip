@@ -166,7 +166,7 @@ sup{
 <script src="jquery-latest.js"></script>
 <script>
     var quickTimeout=1000;
-    var slowTimeout=4200;
+    var slowTimeout=4000;
     var showall=true;
 
     $(document).ready(function(){
@@ -178,8 +178,9 @@ sup{
         setInterval(function quickreload() {
             $("#hashKeys").load("hashKeys.php");
             $("#compareKeys").load("compareKeys.php");
-            $("#filterQuality").load("filterQuality.php");
             $("#hashCount").load("hashTotal.php");
+            $("#trendsData").load("trendsData.php");
+            $("#filterQuality").load("filterQuality.php");
             $("#compareCount").load("compareTotal.php");
             $("#comparePerc").load("comparePerc.php");
         }, quickTimeout);
@@ -196,8 +197,10 @@ sup{
             showall=!showall;
             if(showall){
                 $(".subContent").show(250);
+		hideCredits();
             } else {
                 $(".subContent").hide(250);
+		showCredits();
             }
         });
 
@@ -207,6 +210,10 @@ sup{
 
         $("#subSearch").click(function(){
             $("#subSearchContent").toggle(250);
+        });
+
+        $("#subTrends").click(function(){
+            $("#subTrendsContent").toggle(250);
         });
 
         $("#subQuality").click(function(){
@@ -252,6 +259,13 @@ Percent of tweets with this key in all filtered tweets (Sum of these percentages
   <div id="compareKeys" class="subData" title="Key being searched for 
 Occurrences of this key in all filtered tweets
 Occurrence of this key per occurrence of all keys counting once per tweet"></div>
+ </div>
+</div>
+
+<div class="sub">
+ <div class="subHead" id="subTrends" title="Top trending words">Trends</div>
+ <div class="subContent" id="subTrendsContent" title="Words that appeared most ignoring common stop words.">
+  <div id="trendsData" class="subData">Trends are being generated. Don't hold your breath though..</div>
  </div>
 </div>
 

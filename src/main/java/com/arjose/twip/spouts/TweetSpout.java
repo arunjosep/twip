@@ -55,7 +55,7 @@ public class TweetSpout extends BaseRichSpout {
 	public TweetSpout(String keyString, Boolean openFire, Boolean hash, String ProxyHost, Integer ProxyPort) {
 		this.fire = openFire;
 		this.keyString = keyString;
-		
+
 		if (hash != null)
 			addHash = hash;
 
@@ -75,12 +75,11 @@ public class TweetSpout extends BaseRichSpout {
 		this.spoutOutputCollector = collector;
 
 		if (addHash)
-			keyString= KeyUtils.addHash(keyString);
-		
+			keyString = KeyUtils.addHash(keyString);
+
 		System.out.println("twipLog: TweetSpout using keyString : " + keyString);
 
 		// ----------------Add keys and secrets here------------------------//
-
 
 		config = new ConfigurationBuilder().setOAuthConsumerKey(customerKey).setOAuthConsumerSecret(customerSecret)
 				.setOAuthAccessToken(accessToken).setOAuthAccessTokenSecret(accessSecret);
